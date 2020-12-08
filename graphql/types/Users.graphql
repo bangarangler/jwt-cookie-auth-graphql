@@ -1,0 +1,19 @@
+type Tokens {
+  accessToken: String
+  refreshToken: String
+}
+
+type User {
+  _id: ID!
+  username: String!
+  tokenVersion: Int
+}
+
+type Query {
+  loggedInUser: User
+}
+
+type Mutation {
+  register(username: String!, password: String!, confirmPW: String!): Tokens
+  login(username: String!, password: String!): Tokens
+}
