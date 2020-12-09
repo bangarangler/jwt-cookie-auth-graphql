@@ -7,6 +7,7 @@ import bodyParser from "body-parser";
 import * as mongodb from "mongodb";
 import cookieParser from "cookie-parser";
 // GENERATED / IMPORTS
+import { __prod_cors__ } from "./constants";
 import { typeDefs } from "./graphql/typeDefs";
 import { resolvers } from "./graphql/resolvers";
 import { ServerContext } from "./ServerContext";
@@ -25,8 +26,9 @@ const main = async () => {
     db = database;
 
     const app = express();
-    // const corsOptions = { origin: [], credentials: true };
-    app.use(cors());
+    const corsConfig = __prod_cors__;
+    // app.use(cors());
+    app.use(cors(corsConfig));
     app.use(cookieParser());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());

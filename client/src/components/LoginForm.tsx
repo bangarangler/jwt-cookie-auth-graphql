@@ -1,6 +1,7 @@
 import React, { FC, useReducer } from "react";
 import { useLoginMutation } from "../codeGenFE";
-import { saveTokens } from "../utilsFE/tempToken";
+// import { saveTokens, saveUser } from "../utilsFE/tempToken";
+import { saveUser } from "../utilsFE/tempToken";
 
 type State = {
   username: string;
@@ -40,14 +41,19 @@ const LoginForm: FC = () => {
       },
     },
     update: (_, { data }) => {
-      console.log("data here", data?.login.tokens);
-      if (data && data.login && data.login.tokens) {
-        console.log("data.login.tokens", data.login.tokens);
-        const { accessToken, refreshToken } = data.login.tokens;
-        // console.log({accessToken, refreshToken})
-        saveTokens({ accessToken, refreshToken });
+      // console.log("data here", data?.login.tokens);
+      // if (data && data.login && data.login.tokens) {
+      //   console.log("data.login.tokens", data.login.tokens);
+      //   const { accessToken, refreshToken } = data.login.tokens;
+      // console.log({accessToken, refreshToken})
+      // saveTokens({ accessToken, refreshToken });
+      // if (data && data.login && data.login.user) {
+      if (data?.login?.user) {
+        console.log("data", data);
+        saveUser(data.login.user);
       }
     },
+    // },
   });
 
   if (error) {

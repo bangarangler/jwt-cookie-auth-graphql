@@ -24,7 +24,7 @@ type LoginResponse {
   error: GeneralError
   errors: [InputError]
   user: User
-  tokens: Tokens
+  # tokens: Tokens
 }
 
 type RegisterResponse {
@@ -41,4 +41,5 @@ type Query {
 type Mutation {
   register(input: UserRegisterInput!): RegisterResponse!
   login(input: UserLoginInput!): LoginResponse!
+  logout: Boolean
 }

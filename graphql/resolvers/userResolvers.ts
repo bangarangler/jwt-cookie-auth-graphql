@@ -8,7 +8,7 @@ import {
   // Tokens,
   User,
 } from "../../codeGenBE";
-import { setTokens } from "../../auth/authTokens";
+import { setTokenCookies, setTokens } from "../../auth/authTokens";
 import { loginValidation } from "../../utils/loginValidation";
 import { registerValidation } from "../../utils/registerValidation";
 
@@ -48,7 +48,7 @@ export const userResolvers: Resolvers = {
     },
   },
   Mutation: {
-    login: async (_, { input }, { db }, ___): Promise<LoginResponse> => {
+    login: async (_, { input }, { db, res }, ___): Promise<LoginResponse> => {
       try {
         const { username, password } = input;
         const isValidLogin = loginValidation(username, password);
@@ -69,9 +69,13 @@ export const userResolvers: Resolvers = {
 
         // if passwords do match generate a token
         const { accessToken, refreshToken } = await setTokens(user);
+        const cookies = setTokenCookies({ accessToken, refreshToken });
+        res.cookie(...cookies.access);
+        res.cookie(...cookies.refresh);
 
         // return token
-        return { tokens: { accessToken, refreshToken }, user };
+        console.log("user res", user);
+        return { user };
       } catch (err) {
         console.log("err", err);
         return { error: { message: "Something went wrong Internally" } };
@@ -108,6 +112,11 @@ export const userResolvers: Resolvers = {
         };
         return { error };
       }
+    },
+    logout: async (_, __, { res }, ____) => {
+      res.clearCookie("access");
+      res.clearCookie("refresh");
+      return true;
     },
   },
 };

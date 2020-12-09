@@ -3,7 +3,7 @@ import {
   validateRefreshToken,
 } from "../auth/validateTokens";
 // const userRepo = require("../users/users-repository"); // double check this
-import { setTokens } from "../auth/authTokens"; // double check this as well
+import { setTokenCookies, setTokens } from "../auth/authTokens"; // double check this as well
 
 export const validateTokensMiddleware = async (
   req: any,
@@ -11,10 +11,12 @@ export const validateTokensMiddleware = async (
   next: any,
   db: any
 ) => {
-  const refreshToken = req.headers["x-refresh-token"];
-  const accessToken = req.headers["x-access-token"];
-  // console.log("refreshToken", refreshToken);
-  // console.log("accessToken", accessToken);
+  // const refreshToken = req.headers["x-refresh-token"];
+  // const accessToken = req.headers["x-access-token"];
+  const refreshToken = req.cookies["refresh"];
+  const accessToken = req.cookies["access"];
+  console.log("refreshToken", refreshToken);
+  console.log("accessToken", accessToken);
 
   if (!accessToken && !refreshToken) return next();
 
@@ -39,20 +41,26 @@ export const validateTokensMiddleware = async (
     // console.log("user from decodedRefreshToken", user);
 
     if (!user || user.tokenVersion !== decodedRefreshToken.user.tokenVersion) {
-      // console.log(
-      // "no user or tokenVersion not = decodedRefreshToken.user.tokenVersion"
-      // );
+      console.log(
+        "no user or tokenVersion not = decodedRefreshToken.user.tokenVersion"
+      );
+      res.clearCookie("access");
+      res.clearCookie("refresh");
       return next();
     }
     req.user = decodedRefreshToken.user;
 
     const userTokens = setTokens(user);
     // console.log("userTokens...", userTokens);
-    res.set({
-      "Access-Control-Expose-Headers": "x-access-token, x-refresh-token",
-      "x-access-token": userTokens.accessToken,
-      "x-refresh-token": userTokens.refreshToken,
-    });
+    // res.set({
+    //   "Access-Control-Expose-Headers": "x-access-token, x-refresh-token",
+    //   "x-access-token": userTokens.accessToken,
+    //   "x-refresh-token": userTokens.refreshToken,
+    // });
+    req.user = decodedRefreshToken.user;
+    const cookies = setTokenCookies(userTokens);
+    res.cookie(...cookies.access);
+    res.cookie(...cookies.refresh);
     return next();
   }
   next();
