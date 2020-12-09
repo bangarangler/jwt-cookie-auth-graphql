@@ -9,11 +9,36 @@ type User {
   tokenVersion: Int
 }
 
+input UserLoginInput {
+  username: String!
+  password: String!
+}
+
+input UserRegisterInput {
+  username: String!
+  password: String!
+  confirmPassword: String!
+}
+
+type LoginResponse {
+  error: GeneralError
+  errors: [InputError]
+  user: User
+  tokens: Tokens
+}
+
+type RegisterResponse {
+  error: GeneralError
+  errors: [InputError]
+  tokens: Tokens
+}
+
 type Query {
   loggedInUser: User
+  me: User
 }
 
 type Mutation {
-  register(username: String!, password: String!, confirmPW: String!): Tokens
-  login(username: String!, password: String!): Tokens
+  register(input: UserRegisterInput!): RegisterResponse!
+  login(input: UserLoginInput!): LoginResponse!
 }

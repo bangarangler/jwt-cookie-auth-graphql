@@ -1,0 +1,8 @@
+type GeneralError {
+  message: String!
+}
+
+type InputError {
+  source: String!
+  message: String!
+}

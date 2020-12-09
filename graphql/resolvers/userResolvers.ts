@@ -1,23 +1,21 @@
 import { ObjectID } from "mongodb";
 import bcrypt from "bcryptjs";
 import {
+  LoginResponse,
   MutationResolvers,
   QueryResolvers,
-  Tokens,
+  RegisterResponse,
+  // Tokens,
   User,
 } from "../../codeGenBE";
 import { setTokens } from "../../auth/authTokens";
+import { loginValidation } from "../../utils/loginValidation";
+import { registerValidation } from "../../utils/registerValidation";
 
 interface Resolvers {
   Query: QueryResolvers;
   Mutation: MutationResolvers;
 }
-
-// interface RegisterInputs {
-//   username: string;
-//   password: string;
-//   confirmPW: string;
-// }
 
 export const userResolvers: Resolvers = {
   Query: {
@@ -35,74 +33,80 @@ export const userResolvers: Resolvers = {
       console.log("foundUser", foundUser);
       return foundUser;
     },
+    me: async (_, __, { req, db }): Promise<User | null> => {
+      console.log("req", req.user);
+      // const accessToken = req.headers["x-access-token"]
+      // const refreshToken = req.headers["x-refresh-token"]
+      // if (!accessToken && !refreshToken) return null;
+      if (!req.user) return null;
+      const user = await db
+        .db("jwtCookie")
+        .collection("users")
+        .findOne({ _id: new ObjectID(req.user.id) });
+      console.log("user", user);
+      return user;
+    },
   },
   Mutation: {
-    login: async (
-      _,
-      { username, password },
-      { db },
-      ___
-    ): Promise<Tokens | null> => {
+    login: async (_, { input }, { db }, ___): Promise<LoginResponse> => {
       try {
-        if (!username || !password) return null;
+        const { username, password } = input;
+        const isValidLogin = loginValidation(username, password);
+        if (isValidLogin.length > 0) return { errors: isValidLogin };
         const user = await db
           .db("jwtCookie")
           .collection("users")
           .findOne({ username });
-        if (!user) return null;
+        if (!user) return { error: { message: "No user with that username" } };
 
         // check passwords match
-        const correctPW = password.toString().trim();
-        const validPw = await bcrypt.compare(correctPW, user.password);
-        // if no match return null
-        if (!validPw) return null;
+        // const correctPW = password.toString().trim();
+        const validPw = await bcrypt.compare(password, user.password);
+        if (!validPw) return { error: { message: "Invalid Credentials" } };
         const tokenVersion = user.tokenVersion;
+        // do something with tokenVersion
         console.log("tokenVersion", tokenVersion);
 
         // if passwords do match generate a token
         const { accessToken, refreshToken } = await setTokens(user);
 
         // return token
-        return { accessToken, refreshToken };
+        return { tokens: { accessToken, refreshToken }, user };
       } catch (err) {
         console.log("err", err);
-        return null;
+        return { error: { message: "Something went wrong Internally" } };
       }
     },
-    register: async (
-      _,
-      { username, password, confirmPW },
-      { db },
-      ___
-    ): Promise<Tokens | null> => {
-      // const { username, password, confirmPW } = context;
+    register: async (_, { input }, { db }, ___): Promise<RegisterResponse> => {
       try {
-        if (!username || !password || !confirmPW) {
-          console.log("no info provided");
-          return null;
-        }
-        if (password.toString().trim() !== confirmPW.toString().trim()) {
-          console.log("pw don't match");
-          return null;
-        }
+        const { username, password, confirmPassword } = input;
+        const errors = registerValidation(username, password, confirmPassword);
+        if (errors.length > 0) return { errors };
         const hashedPW = await bcrypt.hash(password, 12);
         const newUser = { username, password: hashedPW, tokenVersion: 0 };
         const foundUser = await db
           .db("jwtCookie")
           .collection("users")
           .findOne({ username });
-        if (foundUser) return null;
+        if (foundUser) return { error: { message: "User Already Exists" } };
         const user = await db
           .db("jwtCookie")
           .collection("users")
           .insertOne(newUser);
 
-        if (!user) return null;
+        if (!user)
+          return { error: { message: "Could not add user at this time" } };
         const { accessToken, refreshToken } = await setTokens(user);
-        return { accessToken, refreshToken };
+        const tokenVersion = user.ops[0].tokenVersion;
+        console.log({ tokenVersion });
+        console.log({ foundUser });
+        return { tokens: { accessToken, refreshToken } };
       } catch (err) {
         console.log("err from register", err);
-        return null;
+        const error = {
+          message: "Something went wrong internally registering",
+        };
+        return { error };
       }
     },
   },
