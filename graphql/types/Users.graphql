@@ -30,8 +30,13 @@ type LoginResponse {
 type RegisterResponse {
   error: GeneralError
   errors: [InputError]
-  tokens: Tokens
+  user: User
+  # tokens: Tokens
 }
+
+# type Result {
+#   id: String
+# }
 
 type Query {
   loggedInUser: User
@@ -42,4 +47,8 @@ type Mutation {
   register(input: UserRegisterInput!): RegisterResponse!
   login(input: UserLoginInput!): LoginResponse!
   logout: Boolean
+}
+
+type Subscription {
+  somethingChanged: String
 }

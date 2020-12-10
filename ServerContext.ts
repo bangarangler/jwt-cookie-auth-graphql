@@ -4,4 +4,5 @@ export interface ServerContext {
   req: Request;
   res: Response;
   db: any;
+  connection: any;
 }

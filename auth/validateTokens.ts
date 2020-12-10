@@ -1,5 +1,12 @@
 import { verify } from "jsonwebtoken";
-export const validateAccessToken = (token: string) => {
+
+// export interface ValidUser {
+//   user: string
+//   iat: number
+//   exp: number
+// }
+
+export const validateAccessToken = (token: string): null | any => {
   // console.log("token", token);
   try {
     // console.log(
@@ -13,7 +20,7 @@ export const validateAccessToken = (token: string) => {
   }
 };
 
-export const validateRefreshToken = (token: string) => {
+export const validateRefreshToken = (token: string): null | any => {
   // console.log("token", token);
   try {
     // console.log(

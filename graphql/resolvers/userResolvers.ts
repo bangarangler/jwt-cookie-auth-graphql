@@ -5,6 +5,8 @@ import {
   MutationResolvers,
   QueryResolvers,
   RegisterResponse,
+  SubscriptionResolvers,
+  // Result,
   // Tokens,
   User,
 } from "../../codeGenBE";
@@ -15,6 +17,7 @@ import { registerValidation } from "../../utils/registerValidation";
 interface Resolvers {
   Query: QueryResolvers;
   Mutation: MutationResolvers;
+  Subscription: SubscriptionResolvers;
 }
 
 export const userResolvers: Resolvers = {
@@ -33,7 +36,7 @@ export const userResolvers: Resolvers = {
       console.log("foundUser", foundUser);
       return foundUser;
     },
-    me: async (_, __, { req, db }): Promise<User | null> => {
+    me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
       console.log("req", req.user);
       // const accessToken = req.headers["x-access-token"]
       // const refreshToken = req.headers["x-refresh-token"]
@@ -44,6 +47,9 @@ export const userResolvers: Resolvers = {
         .collection("users")
         .findOne({ _id: new ObjectID(req.user.id) });
       console.log("user", user);
+      pubsub.publish("something_changed", {
+        somethingChanged: "Hey here is the me response",
+      });
       return user;
     },
   },
@@ -81,7 +87,12 @@ export const userResolvers: Resolvers = {
         return { error: { message: "Something went wrong Internally" } };
       }
     },
-    register: async (_, { input }, { db }, ___): Promise<RegisterResponse> => {
+    register: async (
+      _,
+      { input },
+      { db, res },
+      ___
+    ): Promise<RegisterResponse> => {
       try {
         const { username, password, confirmPassword } = input;
         const errors = registerValidation(username, password, confirmPassword);
@@ -101,10 +112,15 @@ export const userResolvers: Resolvers = {
         if (!user)
           return { error: { message: "Could not add user at this time" } };
         const { accessToken, refreshToken } = await setTokens(user);
+        const cookies = setTokenCookies({ accessToken, refreshToken });
+        res.cookie(...cookies.access);
+        res.cookie(...cookies.refresh);
         const tokenVersion = user.ops[0].tokenVersion;
         console.log({ tokenVersion });
         console.log({ foundUser });
-        return { tokens: { accessToken, refreshToken } };
+        console.log({ user });
+        return { user: user.ops[0] };
+        // return { tokens: { accessToken, refreshToken } };
       } catch (err) {
         console.log("err from register", err);
         const error = {
@@ -117,6 +133,15 @@ export const userResolvers: Resolvers = {
       res.clearCookie("access");
       res.clearCookie("refresh");
       return true;
+    },
+  },
+  Subscription: {
+    somethingChanged: {
+      subscribe: (_, __, { connection }) => {
+        // console.log("connection", connection);
+        // console.log("pubsub", connection.pubsub);
+        return connection.pubsub.asyncIterator("something_changed");
+      },
     },
   },
 };
