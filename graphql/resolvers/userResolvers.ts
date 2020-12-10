@@ -20,6 +20,8 @@ interface Resolvers {
   Subscription: SubscriptionResolvers;
 }
 
+const SOMETHING_CHANGED = "something_changed";
+
 export const userResolvers: Resolvers = {
   Query: {
     loggedInUser: async (_, __, { req, db }): Promise<User | null> => {
@@ -47,7 +49,7 @@ export const userResolvers: Resolvers = {
         .collection("users")
         .findOne({ _id: new ObjectID(req.user.id) });
       console.log("user", user);
-      pubsub.publish("something_changed", {
+      pubsub.publish(SOMETHING_CHANGED, {
         somethingChanged: "Hey here is the me response",
       });
       return user;
@@ -140,7 +142,7 @@ export const userResolvers: Resolvers = {
       subscribe: (_, __, { connection }) => {
         // console.log("connection", connection);
         // console.log("pubsub", connection.pubsub);
-        return connection.pubsub.asyncIterator("something_changed");
+        return connection.pubsub.asyncIterator(SOMETHING_CHANGED);
       },
     },
   },
