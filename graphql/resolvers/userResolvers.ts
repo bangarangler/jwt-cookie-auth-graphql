@@ -13,6 +13,7 @@ import {
 // import { setTokenCookies, setTokens } from "../../auth/authTokens";
 import { loginValidation } from "../../utils/loginValidation";
 import { registerValidation } from "../../utils/registerValidation";
+import { COOKIE_NAME } from "../../constants";
 
 interface Resolvers {
   Query: QueryResolvers;
@@ -38,20 +39,23 @@ export const userResolvers: Resolvers = {
       console.log("foundUser", foundUser);
       return foundUser;
     },
-    me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
-      console.log("req", req.user);
+    // me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
+    me: async (_, __, { req, db }): Promise<User | null> => {
+      console.log("req", req.session.user);
       // const accessToken = req.headers["x-access-token"]
       // const refreshToken = req.headers["x-refresh-token"]
       // if (!accessToken && !refreshToken) return null;
-      if (!req.user) return null;
+      // if (!req.user) return null;
+      if (!req.session.user) return null;
       const user = await db
         .db("jwtCookie")
         .collection("users")
-        .findOne({ _id: new ObjectID(req.user.id) });
+        // .findOne({ _id: new ObjectID(req.user.id) });
+        .findOne({ _id: new ObjectID(req.session.user) });
       console.log("user", user);
-      pubsub.publish(SOMETHING_CHANGED, {
-        somethingChanged: "Hey here is the me response",
-      });
+      // pubsub.publish(SOMETHING_CHANGED, {
+      //   somethingChanged: "Hey here is the me response",
+      // });
       return user;
     },
   },
@@ -135,7 +139,7 @@ export const userResolvers: Resolvers = {
       }
     },
     logout: async (_, __, { res }, ____) => {
-      res.clearCookie("hank");
+      res.clearCookie(COOKIE_NAME);
       // res.clearCookie("access");
       // res.clearCookie("refresh");
       return true;
