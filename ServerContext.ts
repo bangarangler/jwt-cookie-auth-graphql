@@ -5,4 +5,5 @@ export interface ServerContext {
   res: Response;
   db: any;
   connection: any;
+  redis: any;
 }

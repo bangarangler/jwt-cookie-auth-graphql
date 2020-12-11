@@ -4,5 +4,7 @@ declare namespace NodeJS {
     ACCESS_TOKEN: string;
     REFRESH_ACCESS_TOKEN: string;
     MONGO_STRING: string;
+    REDIS_HOST: string;
+    REDIS_PORT: string;
   }
 }

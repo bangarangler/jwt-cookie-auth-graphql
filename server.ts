@@ -8,13 +8,15 @@ import * as mongodb from "mongodb";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import Redis from "ioredis";
-import { RedisPubSub } from "graphql-redis-subscriptions";
+// import { RedisPubSub } from "graphql-redis-subscriptions";
+import session from "express-session";
+import connectRedis from "connect-redis";
 // GENERATED / IMPORTS
-import { __prod_cors__ } from "./constants";
+import { COOKIE_NAME, __prod_cors__, __prod__ } from "./constants";
 import { typeDefs } from "./graphql/typeDefs";
 import { resolvers } from "./graphql/resolvers";
 import { ServerContext } from "./ServerContext";
-import { validateTokensMiddleware } from "./middleware/validateTokensMiddleware";
+// import { validateTokensMiddleware } from "./middleware/validateTokensMiddleware";
 import {
   validateAccessToken,
   validateRefreshToken,
@@ -32,27 +34,47 @@ const main = async () => {
     if (!database) throw new Error("Mongo not connected!");
     db = database;
 
-    const redisOptions = {
-      host: process.env.REDIS_DOMAIN_NAME || "127.0.0.1",
-      port: process.env.REDIS_PORT || "6379",
-      retryStrategy: (times: any) => {
-        return Math.min(times * 50, 2000);
-      },
-    };
-
-    const pubsub = new RedisPubSub({
-      publisher: new Redis(redisOptions as any),
-      subscriber: new Redis(redisOptions as any),
-    });
+    // const redisOptions = {
+    //   host: process.env.REDIS_HOST || "127.0.0.1",
+    //   port: process.env.REDIS_PORT || "6379",
+    //   retryStrategy: (times: any) => {
+    //     return Math.min(times * 50, 2000);
+    //   },
+    // const pubsub = new RedisPubSub({
+    //   publisher: new Redis(redisOptions as any),
+    //   subscriber: new Redis(redisOptions as any),
+    // });
+    // };
 
     const app = express();
+    // TEST NEW STUFF
+    const RedisStore = connectRedis(session);
+
+    const redis = new Redis(process.env.REDIS_PORT);
+    // app.set("trust proxy", 1)
     const corsConfig = __prod_cors__;
     // app.use(cors());
     app.use(cors(corsConfig));
+    app.use(
+      session({
+        name: COOKIE_NAME,
+        store: new RedisStore({ client: redis, disableTouch: true }),
+        cookie: {
+          maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
+          httpOnly: __prod__,
+          sameSite: "lax",
+          secure: __prod__, // cookie only works in https
+          domain: __prod__ ? "domain here" : undefined,
+        },
+        saveUninitialized: false,
+        secret: process.env.REDIS_SECRET!,
+        resave: false,
+      })
+    );
     app.use(cookieParser());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
-    app.use((req, res, next) => validateTokensMiddleware(req, res, next, db));
+    // app.use((req, next) => validateTokensMiddleware(req, next));
 
     const server = new ApolloServer({
       typeDefs,
@@ -87,19 +109,21 @@ const main = async () => {
           }
         },
       },
-      context: async ({ req, res, connection }: ServerContext) => {
+      // context: async ({ req, res, connection, redis }: ServerContext) => {
+      context: async ({ req, res, redis }: ServerContext) => {
         // Is it a WS connection?
-        if (connection) {
-          // Are you logged in if you are your id is in context?
-          if (!connection.context.id) {
-            throw new ApolloError("Not Authenticated");
-          }
-          // your good get it out of context
-          connection.pubsub = pubsub;
-          return { connection };
-        }
+        // if (connection) {
+        // Are you logged in if you are your id is in context?
+        // if (!connection.context.id) {
+        //   throw new ApolloError("Not Authenticated");
+        // }
+        // your good get it out of context
+        // connection.pubsub = pubsub;
+        // return { connection };
+        // }
         // otherwise not a WS so just pass pubsub to context
-        return { req, res, db, pubsub };
+        // return { req, res, db, pubsub };
+        return { req, res, db, redis };
       },
     });
 

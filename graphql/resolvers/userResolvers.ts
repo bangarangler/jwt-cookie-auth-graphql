@@ -10,7 +10,7 @@ import {
   // Tokens,
   User,
 } from "../../codeGenBE";
-import { setTokenCookies, setTokens } from "../../auth/authTokens";
+// import { setTokenCookies, setTokens } from "../../auth/authTokens";
 import { loginValidation } from "../../utils/loginValidation";
 import { registerValidation } from "../../utils/registerValidation";
 
@@ -56,7 +56,7 @@ export const userResolvers: Resolvers = {
     },
   },
   Mutation: {
-    login: async (_, { input }, { db, res }, ___): Promise<LoginResponse> => {
+    login: async (_, { input }, { db, req }, ___): Promise<LoginResponse> => {
       try {
         const { username, password } = input;
         const isValidLogin = loginValidation(username, password);
@@ -76,10 +76,11 @@ export const userResolvers: Resolvers = {
         console.log("tokenVersion", tokenVersion);
 
         // if passwords do match generate a token
-        const { accessToken, refreshToken } = await setTokens(user);
-        const cookies = setTokenCookies({ accessToken, refreshToken });
-        res.cookie(...cookies.access);
-        res.cookie(...cookies.refresh);
+        // const { accessToken, refreshToken } = setTokens(user);
+        // const cookies = setTokenCookies({ accessToken, refreshToken });
+        req.session.user = user._id;
+        // res.cookie(...cookies.access);
+        // res.cookie(...cookies.refresh);
 
         // return token
         console.log("user res", user);
@@ -92,7 +93,7 @@ export const userResolvers: Resolvers = {
     register: async (
       _,
       { input },
-      { db, res },
+      { db, req },
       ___
     ): Promise<RegisterResponse> => {
       try {
@@ -113,14 +114,16 @@ export const userResolvers: Resolvers = {
 
         if (!user)
           return { error: { message: "Could not add user at this time" } };
-        const { accessToken, refreshToken } = await setTokens(user);
-        const cookies = setTokenCookies({ accessToken, refreshToken });
-        res.cookie(...cookies.access);
-        res.cookie(...cookies.refresh);
-        const tokenVersion = user.ops[0].tokenVersion;
-        console.log({ tokenVersion });
+        // const { accessToken, refreshToken } = setTokens(user);
+        // const cookies = setTokenCookies({ accessToken, refreshToken });
+        // res.cookie(...cookies.access);
+        // res.cookie(...cookies.refresh);
+        // req.session.user = user
+        // const tokenVersion = user.ops[0].tokenVersion;
+        // console.log({ tokenVersion });
         console.log({ foundUser });
         console.log({ user });
+        req.session.user = user.ops[0]._id;
         return { user: user.ops[0] };
         // return { tokens: { accessToken, refreshToken } };
       } catch (err) {
@@ -132,8 +135,9 @@ export const userResolvers: Resolvers = {
       }
     },
     logout: async (_, __, { res }, ____) => {
-      res.clearCookie("access");
-      res.clearCookie("refresh");
+      res.clearCookie("hank");
+      // res.clearCookie("access");
+      // res.clearCookie("refresh");
       return true;
     },
   },
