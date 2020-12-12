@@ -24,6 +24,7 @@ type LoginResponse {
   error: GeneralError
   errors: [InputError]
   user: User
+  accessToken: String
   # tokens: Tokens
 }
 
@@ -31,6 +32,7 @@ type RegisterResponse {
   error: GeneralError
   errors: [InputError]
   user: User
+  accessToken: String
   # tokens: Tokens
 }
 

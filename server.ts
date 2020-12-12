@@ -16,7 +16,7 @@ import { COOKIE_NAME, __prod_cors__, __prod__ } from "./constants";
 import { typeDefs } from "./graphql/typeDefs";
 import { resolvers } from "./graphql/resolvers";
 import { ServerContext } from "./ServerContext";
-// import { validateTokensMiddleware } from "./middleware/validateTokensMiddleware";
+import { validateTokensMiddleware } from "./middleware/validateTokensMiddleware";
 import {
   validateAccessToken,
   validateRefreshToken,
@@ -51,6 +51,7 @@ const main = async () => {
     const RedisStore = connectRedis(session);
 
     const redis = new Redis(process.env.REDIS_PORT);
+    if (!redis) throw new Error("Redis Not Connected");
     // app.set("trust proxy", 1)
     const corsConfig = __prod_cors__;
     // app.use(cors());
@@ -61,6 +62,7 @@ const main = async () => {
         store: new RedisStore({ client: redis, disableTouch: true }),
         cookie: {
           maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
+          // maxAge: 10000, // 10 years
           httpOnly: __prod__,
           sameSite: "lax",
           secure: __prod__, // cookie only works in https
@@ -74,7 +76,7 @@ const main = async () => {
     app.use(cookieParser());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
-    // app.use((req, next) => validateTokensMiddleware(req, next));
+    app.use((req, res, next) => validateTokensMiddleware(req, res, next, db));
 
     const server = new ApolloServer({
       typeDefs,

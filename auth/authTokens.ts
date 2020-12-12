@@ -5,21 +5,20 @@ import { __prod__ } from "../constants";
 export const setTokens = (user: User) => {
   const sevenDays = 60 * 60 * 24 * 7 * 1000;
   const fifteenMins = 60 * 15 * 1000;
-  const accessUser = {
-    id: user._id,
-  };
-  console.log("accessUser", accessUser);
+  const accessUser = user._id;
 
-  const accessToken = sign({ user: accessUser }, process.env.ACCESS_TOKEN!, {
+  // console.log("accessUser", accessUser);
+
+  const accessToken = sign({ userId: accessUser }, process.env.ACCESS_TOKEN!, {
     expiresIn: fifteenMins,
   });
-  console.log("accessToken", accessToken);
+  // console.log("accessToken", accessToken);
 
   const refreshUser = {
-    id: user._id,
+    userId: user._id,
     tokenVersion: user.tokenVersion,
   };
-  console.log("refreshUser", refreshUser);
+  // console.log("refreshUser", refreshUser);
 
   const refreshToken = sign(
     {
@@ -28,20 +27,22 @@ export const setTokens = (user: User) => {
     process.env.REFRESH_ACCESS_TOKEN!,
     { expiresIn: sevenDays }
   );
-  console.log("refreshToken", refreshToken);
+  // console.log("refreshToken", refreshToken);
 
   return { accessToken, refreshToken };
 };
 
 export const setTokenCookies = ({ accessToken, refreshToken }: any) => {
-  const cookieOptions = {
-    httpOnly: true,
-    secure: __prod__, // set for https only
-    // domain: "app.site.com"
-    // sameSite: "lax"
-  };
+  // const cookieOptions = {
+  //   httpOnly: true,
+  //   secure: __prod__, // set for https only
+  //   // domain: "app.site.com"
+  //   // sameSite: "lax"
+  // };
   return {
-    access: ["access", accessToken, cookieOptions],
-    refresh: ["refresh", refreshToken, cookieOptions],
+    // access: ["access", accessToken, cookieOptions],
+    access: ["access", accessToken],
+    // refresh: ["refresh", refreshToken, cookieOptions],
+    refresh: ["refresh", refreshToken],
   };
 };
