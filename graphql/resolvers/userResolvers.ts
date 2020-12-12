@@ -28,34 +28,21 @@ const SOMETHING_CHANGED = "something_changed";
 export const userResolvers: Resolvers = {
   Query: {
     loggedInUser: async (_, __, { req, db }): Promise<User | null> => {
-      // console.log({ req });
       if (!req.user) {
-        // console.log("req.user", req.user);
         return null;
       }
-      // console.log("req.user", req.user);
       const foundUser = await db
         .db("jwtCookie")
         .collection("users")
         .findOne({ _id: new ObjectID(req.user.id) });
-      // console.log("foundUser", foundUser);
       return foundUser;
     },
     // me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
     me: async (_, __, { req, db }): Promise<User | null> => {
-      // console.log("req", req.session.user);
       const accessToken = req.headers["bearer"];
-      // const refreshToken = req.headers["x-refresh-token"]
-      // if (!accessToken && !refreshToken) return null;
-      // if (!req.user) return null;
       if (!accessToken) return null;
       const validateAccessToken = (token: string): null | any => {
-        // console.log("token", token);
         try {
-          // console.log(
-          //   "validateAccessTokenRes",
-          //   verify(token, process.env.ACCESS_TOKEN!)
-          // );
           return verify(token, process.env.ACCESS_TOKEN!);
         } catch (err) {
           console.log("err", err);
@@ -64,11 +51,9 @@ export const userResolvers: Resolvers = {
       };
       const validUser = validateAccessToken(accessToken);
       console.log({ validUser });
-      // if (!req.session.user) return null;
       const user = await db
         .db("jwtCookie")
         .collection("users")
-        // .findOne({ _id: new ObjectID(req.user.id) });
         .findOne({ _id: new ObjectID(validUser.userId) });
       // console.log("user HERE", user);
       // pubsub.publish(SOMETHING_CHANGED, {
@@ -100,17 +85,10 @@ export const userResolvers: Resolvers = {
         // if passwords do match generate a token
         const { accessToken, refreshToken } = setTokens(user);
         const cookies = setTokenCookies({ accessToken, refreshToken });
-        req.session.userId = user._id;
         req.session.refresh = cookies.refresh;
-        // req.session.access = accessToken;
-        // req.session.refresh = refreshToken;
-        // res.cookie(...cookies.access);
-        // res.cookie(...cookies.refresh);
 
         // return token
         console.log("user res", user);
-        // console.log("refreshToken", refreshToken);
-        // console.log("req.session.refreshToken", req.session.refreshToken);
         return { user, accessToken };
       } catch (err) {
         console.log("err", err);
@@ -143,24 +121,9 @@ export const userResolvers: Resolvers = {
         if (!user)
           return { error: { message: "Could not add user at this time" } };
         const { accessToken, refreshToken } = setTokens(user.ops[0]);
-        // console.log({ accessToken });
-        // console.log({ refreshToken });
         const cookies = setTokenCookies({ accessToken, refreshToken });
-        // console.log({ cookies });
-        // res.cookie(...cookies.access);
-        // res.cookie(...cookies.refresh);
-        // req.session.user = user
-        // const tokenVersion = user.ops[0].tokenVersion;
-        // console.log({ tokenVersion });
-        // console.log({ foundUser });
-        // console.log({ user });
-        req.session.userId = user.ops[0]._id;
         req.session.refresh = cookies.refresh;
-        // req.session.access = accessToken;
-        // req.session.refresh = refreshToken;
-        // console.log("req.session", req.session);
         return { user: user.ops[0], accessToken };
-        // return { tokens: { accessToken, refreshToken } };
       } catch (err) {
         console.log("err from register", err);
         const error = {
@@ -170,11 +133,8 @@ export const userResolvers: Resolvers = {
       }
     },
     logout: async (_, __, { res, req }, ____) => {
-      // console.log("cookie", COOKIE_NAME);
       res.clearCookie(COOKIE_NAME);
       req.session.destroy;
-      // res.clearCookie("access");
-      // res.clearCookie("refresh");
       return true;
     },
   },
