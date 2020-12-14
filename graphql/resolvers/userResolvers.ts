@@ -40,6 +40,14 @@ export const userResolvers: Resolvers = {
     // me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
     me: async (_, __, { req, db }): Promise<User | null> => {
       const accessToken = req.headers["bearer"];
+      if (req.session.userId) {
+        const sessionUser = req.session.userId;
+        console.log("sessionUser", sessionUser);
+      }
+      if (req.session.refresh) {
+        const refreshToken = req.session.refresh;
+        console.log("refreshToken", refreshToken);
+      }
       if (!accessToken) return null;
       const validateAccessToken = (token: string): null | any => {
         try {
@@ -85,7 +93,9 @@ export const userResolvers: Resolvers = {
         // if passwords do match generate a token
         const { accessToken, refreshToken } = setTokens(user);
         const cookies = setTokenCookies({ accessToken, refreshToken });
-        req.session.refresh = cookies.refresh;
+        // req.session.refresh = cookies.refresh;
+        req.session.refresh = cookies.refresh[1];
+        req.session.userId = user._id;
 
         // return token
         console.log("user res", user);
@@ -122,7 +132,10 @@ export const userResolvers: Resolvers = {
           return { error: { message: "Could not add user at this time" } };
         const { accessToken, refreshToken } = setTokens(user.ops[0]);
         const cookies = setTokenCookies({ accessToken, refreshToken });
-        req.session.refresh = cookies.refresh;
+        req.session.refresh = cookies.refresh[1];
+        req.session.userId = user._id;
+        // console.log("cookies.refresh", cookies.refresh);
+        console.log("session from register", req.session);
         return { user: user.ops[0], accessToken };
       } catch (err) {
         console.log("err from register", err);

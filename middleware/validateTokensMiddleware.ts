@@ -5,6 +5,7 @@ import {
 import { ObjectID } from "mongodb";
 import { COOKIE_NAME } from "../constants";
 import { setTokenCookies, setTokens } from "../auth/authTokens"; // double check this as well
+// import { ApolloError } from "apollo-server-express";
 // import { COOKIE_NAME } from "../constants";
 
 export const validateTokensMiddleware = async (
@@ -17,6 +18,9 @@ export const validateTokensMiddleware = async (
   const accessToken = req.headers["bearer"];
   const refreshToken = req?.session?.refresh?.[1];
   // no tokens ... don't know you... go to login or register
+  // if (!accessToken && !refreshToken && !req.session.userId) {
+  //   throw new ApolloError("Not Authenticated");
+  // }
   if (!accessToken && !refreshToken) {
     // is this needed?
     // req.session.destroy;
