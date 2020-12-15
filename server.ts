@@ -19,7 +19,7 @@ import { COOKIE_NAME, __prod_cors__, __prod__ } from "./constants";
 import { typeDefs } from "./graphql/typeDefs";
 import { resolvers } from "./graphql/resolvers";
 import { ServerContext } from "./ServerContext";
-// import { validateTokensMiddleware } from "./middleware/validateTokensMiddleware";
+import { validateTokensMiddleware } from "./middleware/validateTokensMiddleware";
 import {
   validateAccessToken,
   validateRefreshToken,
@@ -79,7 +79,7 @@ const main = async () => {
     app.use(cookieParser());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
-    // app.use((req, res, next) => validateTokensMiddleware(req, res, next, db));
+    app.use((req, res, next) => validateTokensMiddleware(req, res, next, db));
 
     const schema = applyMiddleware(
       makeExecutableSchema({ typeDefs, resolvers }),

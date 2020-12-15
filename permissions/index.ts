@@ -3,8 +3,8 @@ import * as rules from "./authRules";
 
 export const permissions = shield({
   Query: {
-    me: rules.isAuthenticated,
-    loggedInUser: rules.isAuthenticated,
+    "*": rules.isAuthenticated,
+    // loggedInUser: rules.isAuthenticated,
   },
   Mutation: {
     "*": rules.isAuthenticated,
