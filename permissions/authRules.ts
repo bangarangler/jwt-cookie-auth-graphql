@@ -3,12 +3,15 @@ import { rule } from "graphql-shield";
 
 export const isAuthenticated = rule()(
   async (_, __, { req }, ___): Promise<any> => {
-    const refreshToken = req?.session?.refresh;
-    const accessToken = req.headers["bearer"];
+    // const refreshToken = req?.session?.refresh;
+    // const accessToken = req.headers["bearer"];
     // if (!refreshToken || !accessToken) {
-    console.log("accessToken", accessToken);
-    console.log("req.session from isAuthenticated", req.session);
-    console.log("refreshToken", refreshToken);
-    return req.session.userId !== null;
+    // console.log("accessToken", accessToken);
+    console.log("req.session from isAuthenticated", req.session.userId);
+    // console.log("refreshToken", refreshToken);
+    // if (!refreshToken || !refreshToken) {
+
+    // }
+    return req.session.userId !== undefined;
   }
 );

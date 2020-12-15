@@ -95,6 +95,7 @@ export const userResolvers: Resolvers = {
         const cookies = setTokenCookies({ accessToken, refreshToken });
         // req.session.refresh = cookies.refresh;
         req.session.refresh = cookies.refresh[1];
+        console.log("user from login", user);
         req.session.userId = user._id;
 
         // return token
@@ -133,7 +134,7 @@ export const userResolvers: Resolvers = {
         const { accessToken, refreshToken } = setTokens(user.ops[0]);
         const cookies = setTokenCookies({ accessToken, refreshToken });
         req.session.refresh = cookies.refresh[1];
-        req.session.userId = user._id;
+        req.session.userId = user.ops[0]._id;
         // console.log("cookies.refresh", cookies.refresh);
         console.log("session from register", req.session);
         return { user: user.ops[0], accessToken };
