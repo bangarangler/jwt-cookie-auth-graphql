@@ -1,0 +1,28 @@
+type Post {
+  _id: String!
+  title: String!
+  body: String!
+}
+
+type CreatePostRes {
+  error: GeneralError
+  errors: [InputError]
+  post: Post
+}
+
+input CreatePostInput {
+  title: String!
+  body: String!
+}
+
+type Query {
+  post(id: String!): CreatePostRes!
+}
+
+type Mutation {
+  createPost(options: CreatePostInput!): CreatePostRes!
+}
+
+type Subscription {
+  postAdded(userId: String!): Post!
+}
