@@ -38,7 +38,7 @@ export const userResolvers: Resolvers = {
       return foundUser;
     },
     // me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
-    me: async (_, __, { req, db }): Promise<User | null> => {
+    me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
       const accessToken = req.headers["bearer"];
       if (req.session.userId) {
         const sessionUser = req.session.userId;
@@ -58,15 +58,15 @@ export const userResolvers: Resolvers = {
         }
       };
       const validUser = validateAccessToken(accessToken);
-      console.log({ validUser });
+      // console.log({ validUser });
       const user = await db
         .db("jwtCookie")
         .collection("users")
         .findOne({ _id: new ObjectID(validUser.userId) });
-      // console.log("user HERE", user);
-      // pubsub.publish(SOMETHING_CHANGED, {
-      //   somethingChanged: "Hey here is the me response",
-      // });
+      console.log("user HERE", user);
+      pubsub.publish(SOMETHING_CHANGED, {
+        somethingChanged: "Hey here is the me response",
+      });
       return user;
     },
   },
@@ -95,11 +95,11 @@ export const userResolvers: Resolvers = {
         const cookies = setTokenCookies({ accessToken, refreshToken });
         // req.session.refresh = cookies.refresh;
         req.session.refresh = cookies.refresh[1];
-        console.log("user from login", user);
+        // console.log("user from login", user);
         req.session.userId = user._id;
 
         // return token
-        console.log("user res", user);
+        // console.log("user res", user);
         return { user, accessToken };
       } catch (err) {
         console.log("err", err);
@@ -136,7 +136,7 @@ export const userResolvers: Resolvers = {
         req.session.refresh = cookies.refresh[1];
         req.session.userId = user.ops[0]._id;
         // console.log("cookies.refresh", cookies.refresh);
-        console.log("session from register", req.session);
+        // console.log("session from register", req.session);
         return { user: user.ops[0], accessToken };
       } catch (err) {
         console.log("err from register", err);
@@ -155,6 +155,11 @@ export const userResolvers: Resolvers = {
   Subscription: {
     somethingChanged: {
       subscribe: (_, __, { connection }) => {
+        // console.log("connection from subscription", connection.context);
+        if (!connection.context.req.session.userId) {
+          // console.log("no user!!!!!! NOPE NOPE NOPE");
+        }
+        // console.log("connection", connection);
         // console.log("connection", connection);
         // console.log("pubsub", connection.pubsub);
         return connection.pubsub.asyncIterator(SOMETHING_CHANGED);

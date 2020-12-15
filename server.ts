@@ -1,29 +1,30 @@
 import dotenv from "dotenv-safe";
 dotenv.config();
-import { ApolloError, ApolloServer } from "apollo-server-express";
+import { ApolloServer } from "apollo-server-express";
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import * as mongodb from "mongodb";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
+// import { verify } from "jsonwebtoken";
 import Redis from "ioredis";
-// import { RedisPubSub } from "graphql-redis-subscriptions";
+import { RedisPubSub } from "graphql-redis-subscriptions";
 import session from "express-session";
 import connectRedis from "connect-redis";
-import { applyMiddleware } from "graphql-middleware";
-import { permissions } from "./permissions";
-import { makeExecutableSchema } from "graphql-tools";
+// import { applyMiddleware } from "graphql-middleware";
+// import { permissions } from "./permissions";
+// import { makeExecutableSchema } from "graphql-tools";
 // GENERATED / IMPORTS
 import { COOKIE_NAME, __prod_cors__, __prod__ } from "./constants";
 import { typeDefs } from "./graphql/typeDefs";
 import { resolvers } from "./graphql/resolvers";
 import { ServerContext } from "./ServerContext";
 import { validateTokensMiddleware } from "./middleware/validateTokensMiddleware";
-import {
-  validateAccessToken,
-  validateRefreshToken,
-} from "./auth/validateTokens";
+// import {
+//   validateAccessToken,
+//   validateRefreshToken,
+// } from "./auth/validateTokens";
 
 const { MongoClient } = mongodb;
 
@@ -37,17 +38,18 @@ const main = async () => {
     if (!database) throw new Error("Mongo not connected!");
     db = database;
 
-    // const redisOptions = {
-    //   host: process.env.REDIS_HOST || "127.0.0.1",
-    //   port: process.env.REDIS_PORT || "6379",
-    //   retryStrategy: (times: any) => {
-    //     return Math.min(times * 50, 2000);
-    //   },
-    // const pubsub = new RedisPubSub({
-    //   publisher: new Redis(redisOptions as any),
-    //   subscriber: new Redis(redisOptions as any),
-    // });
-    // };
+    const redisOptions = {
+      host: process.env.REDIS_HOST || "127.0.0.1",
+      port: process.env.REDIS_PORT || "6379",
+      retryStrategy: (times: any) => {
+        return Math.min(times * 50, 2000);
+      },
+    };
+
+    const pubsub = new RedisPubSub({
+      publisher: new Redis(redisOptions as any),
+      subscriber: new Redis(redisOptions as any),
+    });
 
     const app = express();
     // TEST NEW STUFF
@@ -81,58 +83,80 @@ const main = async () => {
     app.use(bodyParser.json());
     app.use((req, res, next) => validateTokensMiddleware(req, res, next, db));
 
-    const schema = applyMiddleware(
-      makeExecutableSchema({ typeDefs, resolvers }),
-      permissions
-    );
-
     const server = new ApolloServer({
-      schema,
+      typeDefs,
+      resolvers,
       playground: {
         endpoint: "/graphql",
         settings: {
           "request.credentials": "include",
         },
       },
-      subscriptions: {
-        onConnect: (_, ws: any, __) => {
-          // get cookies
-          const tokenStr = ws.upgradeReq.headers.cookie;
-          // are there cookies in req?
-          if (tokenStr) {
-            // seperate access= and refresh= from actual cookie value
-            const accessToken = tokenStr.split(";")[0].split("=")[1];
-            const refreshToken = tokenStr.split(";")[1].split("=")[1];
-            // verify the user
-            const decodedAccessToken = validateAccessToken(accessToken);
-            const decodedRefreshToken = validateRefreshToken(refreshToken);
-            // cookie valid?
-            if (!decodedAccessToken || !decodedAccessToken.user) {
-              throw new ApolloError("Not Authenticated");
-            } else if (!decodedRefreshToken || !decodedRefreshToken.user) {
-              throw new ApolloError("Not Authenticated");
-            } else {
-              // return id in context so we can check for it below
-              return decodedAccessToken.user;
-            }
-          }
-        },
-      },
       // context: async ({ req, res, connection, redis }: ServerContext) => {
-      context: async ({ req, res, redis }: ServerContext) => {
+      context: async ({ req, res, connection, redis }: ServerContext) => {
+        // const userId = req?.session?.userId || "";
+        // console.log("userId", userId);
+        // const accessToken = req.get("Authorization") || "";
+        // console.log("accessToken", accessToken);
+        // const userId = getUser(accessToken);
         // Is it a WS connection?
-        // if (connection) {
-        // Are you logged in if you are your id is in context?
-        // if (!connection.context.id) {
-        //   throw new ApolloError("Not Authenticated");
-        // }
-        // your good get it out of context
-        // connection.pubsub = pubsub;
-        // return { connection };
-        // }
+        if (connection) {
+          //   console.log("connection", connection);
+          // Are you logged in if you are your id is in context?
+          // if (!connection.context.id) {
+          //   throw new ApolloError("Not Authenticated");
+          // }
+          // your good get it out of context
+          connection.pubsub = pubsub;
+          return { connection };
+        }
         // otherwise not a WS so just pass pubsub to context
         // return { req, res, db, pubsub };
-        return { req, res, db, redis };
+        return { req, res, db, redis, pubsub };
+      },
+      subscriptions: {
+        onConnect: (_, ws: any) => {
+          console.log("ws", ws);
+          // console.log("ws", ws.upgradedReq);
+          return new Promise((res: any) => {
+            // console.log("res.upgradedReq", res.upgradedReq);
+            res({ req: ws.upgradedReq });
+          });
+        },
+        // onConnect: (_, ws: any, __) => {
+        // onConnect: (connectionParams: any) => {
+        //   console.log("connectionParams", connectionParams);
+        //   if (connectionParams.authToken) {
+        //     console.log(
+        //       "connectionParams.authToken",
+        //       connectionParams.authToken
+        //     );
+        //   }
+        //     const userId = ws.upgradedReq;
+        //     console.log("userId from subscriptions", userId);
+        // return userId
+        // get cookies
+        // const tokenStr = ws.upgradeReq.headers.cookie;
+        // console.log("tokenStr", tokenStr);
+        // are there cookies in req?
+        // if (tokenStr) {
+        // seperate access= and refresh= from actual cookie value
+        // const accessToken = tokenStr.split(";")[0].split("=")[1];
+        // const refreshToken = tokenStr.split(";")[1].split("=")[1];
+        // verify the user
+        // const decodedAccessToken = validateAccessToken(accessToken);
+        // const decodedRefreshToken = validateRefreshToken(refreshToken);
+        // cookie valid?
+        // if (!decodedAccessToken || !decodedAccessToken.user) {
+        //       throw new ApolloError("Not Authenticated");
+        //     } else if (!decodedRefreshToken || !decodedRefreshToken.user) {
+        //       throw new ApolloError("Not Authenticated");
+        //     } else {
+        //       // return id in context so we can check for it below
+        //       return decodedAccessToken.user;
+        //     }
+        //   }
+        // },
       },
     });
 
