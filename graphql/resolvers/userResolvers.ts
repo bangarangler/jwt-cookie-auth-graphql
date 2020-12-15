@@ -156,9 +156,11 @@ export const userResolvers: Resolvers = {
     somethingChanged: {
       subscribe: (_, __, { connection }) => {
         // console.log("connection from subscription", connection.context);
-        if (!connection.context.req.session.userId) {
-          // console.log("no user!!!!!! NOPE NOPE NOPE");
-        }
+        console.log("connection from subscribe", connection);
+        console.log("connection.context", connection.context);
+        // if (!connection.context.req.session.userId) {
+        // console.log("no user!!!!!! NOPE NOPE NOPE");
+        // }
         // console.log("connection", connection);
         // console.log("connection", connection);
         // console.log("pubsub", connection.pubsub);

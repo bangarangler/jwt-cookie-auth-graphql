@@ -21,10 +21,10 @@ import { typeDefs } from "./graphql/typeDefs";
 import { resolvers } from "./graphql/resolvers";
 import { ServerContext } from "./ServerContext";
 import { validateTokensMiddleware } from "./middleware/validateTokensMiddleware";
-// import {
-//   validateAccessToken,
-//   validateRefreshToken,
-// } from "./auth/validateTokens";
+import {
+  validateAccessToken,
+  // validateRefreshToken,
+} from "./auth/validateTokens";
 
 const { MongoClient } = mongodb;
 
@@ -100,28 +100,42 @@ const main = async () => {
         // console.log("accessToken", accessToken);
         // const userId = getUser(accessToken);
         // Is it a WS connection?
-        if (connection) {
-          //   console.log("connection", connection);
-          // Are you logged in if you are your id is in context?
-          // if (!connection.context.id) {
-          //   throw new ApolloError("Not Authenticated");
-          // }
-          // your good get it out of context
-          connection.pubsub = pubsub;
-          return { connection };
-        }
+        // if (connection) {
+        //   console.log("connection from context", connection);
+        //   // console.log("connection.context", connection.context);
+        //   //   console.log("connection", connection);
+        //   // Are you logged in if you are your id is in context?
+        //   // if (!connection.context.id) {
+        //   //   throw new ApolloError("Not Authenticated");
+        //   // }
+        //   // your good get it out of context
+        //   connection.pubsub = pubsub;
+        //   return { connection };
+        // }
         // otherwise not a WS so just pass pubsub to context
         // return { req, res, db, pubsub };
-        return { req, res, db, redis, pubsub };
+        return { req, res, db, redis, pubsub, connection };
       },
       subscriptions: {
-        onConnect: (_, ws: any) => {
-          console.log("ws", ws);
+        // onConnect: (_, ws: any) => {
+        onConnect: (cParams: any, __) => {
+          // console.log("cParams", cParams.accessToken);
+          const accessToken = cParams.accessToken;
+          console.log("accessToken", accessToken);
+          const user = validateAccessToken(accessToken);
+          if (!user) {
+            throw new Error("Not Authed");
+          }
+          console.log("userId from onConnect", user.userId);
+          return user.userId;
+          // const accessToken = cParams.cParams;
+          // console.log("accessToken", accessToken);
           // console.log("ws", ws.upgradedReq);
-          return new Promise((res: any) => {
-            // console.log("res.upgradedReq", res.upgradedReq);
-            res({ req: ws.upgradedReq });
-          });
+          // return new Promise((res: any) => {
+          // console.log("res.upgradedReq", res.upgradedReq);
+          // console.log("res", res.upgradedReq);
+          // res({ req: ws.upgradedReq });
+          // });
         },
         // onConnect: (_, ws: any, __) => {
         // onConnect: (connectionParams: any) => {
