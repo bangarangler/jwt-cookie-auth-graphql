@@ -6,6 +6,7 @@ type Tokens {
 type User {
   _id: ID!
   username: String!
+  email: String!
   tokenVersion: Int
 }
 
@@ -17,6 +18,7 @@ input UserLoginInput {
 input UserRegisterInput {
   username: String!
   password: String!
+  email: String!
   confirmPassword: String!
 }
 
@@ -36,10 +38,6 @@ type RegisterResponse {
   # tokens: Tokens
 }
 
-# type Result {
-#   id: String
-# }
-
 type Query {
   loggedInUser: User
   me: User
@@ -49,6 +47,7 @@ type Mutation {
   register(input: UserRegisterInput!): RegisterResponse!
   login(input: UserLoginInput!): LoginResponse!
   logout: Boolean
+  forgotPassword(email: String!): Boolean!
 }
 
 type Subscription {

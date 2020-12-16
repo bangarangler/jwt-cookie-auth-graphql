@@ -1,6 +1,6 @@
 import { ObjectID } from "mongodb";
 import bcrypt from "bcryptjs";
-import { verify } from "jsonwebtoken";
+import { verify, sign } from "jsonwebtoken";
 import {
   LoginResponse,
   MutationResolvers,
@@ -16,6 +16,7 @@ import { setTokenCookies, setTokens } from "../../auth/authTokens";
 import { loginValidation } from "../../utils/loginValidation";
 import { registerValidation } from "../../utils/registerValidation";
 import { COOKIE_NAME } from "../../constants";
+import { sendEmail } from "../../utils/sendEmail";
 
 interface Resolvers {
   Query: QueryResolvers;
@@ -113,11 +114,21 @@ export const userResolvers: Resolvers = {
       ___
     ): Promise<RegisterResponse> => {
       try {
-        const { username, password, confirmPassword } = input;
-        const errors = registerValidation(username, password, confirmPassword);
+        const { username, password, email, confirmPassword } = input;
+        const errors = registerValidation(
+          username,
+          password,
+          confirmPassword,
+          email
+        );
         if (errors.length > 0) return { errors };
         const hashedPW = await bcrypt.hash(password, 12);
-        const newUser = { username, password: hashedPW, tokenVersion: 0 };
+        const newUser = {
+          username,
+          password: hashedPW,
+          tokenVersion: 0,
+          email,
+        };
         const foundUser = await db
           .db("jwtCookie")
           .collection("users")
@@ -147,6 +158,41 @@ export const userResolvers: Resolvers = {
     logout: async (_, __, { res, req }, ____) => {
       res.clearCookie(COOKIE_NAME);
       req.session.destroy;
+      return true;
+    },
+    forgotPassword: async (_, { email }, { db, req }) => {
+      const foundUser = db
+        .db("jwtCookie")
+        .collection("users")
+        .findOne({ email });
+      if (!foundUser) {
+        return false;
+      }
+      // const token = v4();
+      console.log("foundUser", foundUser);
+      const threeDays = 1000 * 60 * 60 * 24 * 3; // 3 days
+
+      const tokenToEmail = sign(
+        { userId: foundUser._id },
+        process.env.ACCESS_TOKEN!,
+        { expiresIn: threeDays }
+      );
+
+      // const cookies = setTokenCookies({ tokenToEmail, tokenToSession });
+      const setForgotCookies = ({ tokenToEmail }: any) => {
+        return {
+          forgotPassword: ["forgotPassword", tokenToEmail],
+        };
+      };
+      const cookies = setForgotCookies({ tokenToEmail });
+
+      req.session.forgotPassword = cookies.forgotPassword[1];
+      req.session.userId = foundUser._id;
+      // return { user: user.ops[0], accessToken };
+      await sendEmail(
+        email,
+        `<a href="http://localhost:3000/change-password/${tokenToEmail}">reset password</a>`
+      );
       return true;
     },
   },
