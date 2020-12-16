@@ -1,10 +1,9 @@
 // import { verify } from "jsonwebtoken";
 import { ObjectID } from "mongodb";
-import {withFilter} from 'graphql-subscriptions'
+// import { withFilter } from "graphql-subscriptions";
 import {
   CreatePostRes,
   MutationResolvers,
-  Post,
   QueryResolvers,
   SubscriptionResolvers,
 } from "../../codeGenBE";
@@ -17,6 +16,8 @@ interface Resolvers {
   Mutation: MutationResolvers;
   Subscription: SubscriptionResolvers;
 }
+
+const POST_ADDED = "POST_ADDED";
 
 export const postResolvers: Resolvers = {
   Query: {
@@ -39,7 +40,12 @@ export const postResolvers: Resolvers = {
     },
   },
   Mutation: {
-    createPost: async (_, { options }, { db }, ___): Promise<CreatePostRes> => {
+    createPost: async (
+      _,
+      { options },
+      { db, pubsub },
+      ___
+    ): Promise<CreatePostRes> => {
       const { title, body } = options;
       try {
         if (!title) {
@@ -54,6 +60,8 @@ export const postResolvers: Resolvers = {
           .db("jwtCookie")
           .collection("posts")
           .insertOne({ title, body });
+        console.log("publishing Post");
+        pubsub.publish(POST_ADDED, { postAdded: post.ops[0] });
         return { post: post.ops[0] };
       } catch (err) {
         console.log("err", err);
@@ -62,27 +70,35 @@ export const postResolvers: Resolvers = {
     },
   },
   Subscription: {
-      postAdded: {
-                subscribe: withFilter(
-                  (_, args, {connection}) => connection.pubsub.asyncIterator(POST_ADDED), (payload, variables) => {
-                  return payload.postAdded.id === variables.id
-                })
-  //       subscribe: (_, args, { connection }): Promise<Post> => {
-  //         const POST_ADDED = "POST_ADDED"
-  //         // console.log("connection from subscription", connection.context);
-  //         console.log("connection from subscribe", connection);
-  //         console.log("connection.context", connection.context);
-  //         // if (!connection.context.req.session.userId) {
-  //         // console.log("no user!!!!!! NOPE NOPE NOPE");
-  //         // }
-  //         // console.log("connection", connection);
-  //         // console.log("connection", connection);
-  //         // console.log("pubsub", connection.pubsub);
-  //         // return connection.pubsub.asyncIterator(SOMETHING_CHANGED);
-  //         if (args.userId === args.post._id) {
-  //           return connection.pubsub.asyncIterator(POST_ADDED, args.post)
-  //         }
-  //       },
-  //     },
+    postAdded: {
+      subscribe: (_, __, { connection }) => {
+        return connection.pubsub.asyncIterator(POST_ADDED);
+      },
+      // subscribe: withFilter(
+      //   (_, __, { connection }) => connection.pubsub.asyncIterator(POST_ADDED),
+      //   (payload, _) => {
+      //     console.log("payload", payload);
+      //     // return payload;
+      //     // withFilter returns bool value
+      //     return true;
+      //   }
+      // ),
+      //       subscribe: (_, args, { connection }): Promise<Post> => {
+      //         const POST_ADDED = "POST_ADDED"
+      //         // console.log("connection from subscription", connection.context);
+      //         console.log("connection from subscribe", connection);
+      //         console.log("connection.context", connection.context);
+      //         // if (!connection.context.req.session.userId) {
+      //         // console.log("no user!!!!!! NOPE NOPE NOPE");
+      //         // }
+      //         // console.log("connection", connection);
+      //         // console.log("connection", connection);
+      //         // console.log("pubsub", connection.pubsub);
+      //         // return connection.pubsub.asyncIterator(SOMETHING_CHANGED);
+      //         if (args.userId === args.post._id) {
+      //           return connection.pubsub.asyncIterator(POST_ADDED, args.post)
+      //         }
+      //       },
+    },
   },
 };
