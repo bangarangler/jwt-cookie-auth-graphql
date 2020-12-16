@@ -1,6 +1,6 @@
 // import { verify } from "jsonwebtoken";
 import { ObjectID } from "mongodb";
-// import { withFilter } from "graphql-subscriptions";
+import { withFilter } from "graphql-subscriptions";
 import {
   CreatePostRes,
   MutationResolvers,
@@ -18,6 +18,7 @@ interface Resolvers {
 }
 
 const POST_ADDED = "POST_ADDED";
+const POST_UPDATED = "POST_UPDATED";
 
 export const postResolvers: Resolvers = {
   Query: {
@@ -68,6 +69,51 @@ export const postResolvers: Resolvers = {
         return { error: { message: "Something went wrong internally." } };
       }
     },
+    updatePost: async (
+      _,
+      { updates },
+      { db, pubsub },
+      ___
+    ): Promise<CreatePostRes> => {
+      const { _id, title, body } = updates;
+      const errors = [];
+      try {
+        if (!_id) {
+          return { error: { message: "Must provide and post id" } };
+        }
+        if (title === "") {
+          errors.push({ source: "title", message: "Title can't be empty" });
+        }
+        if (body === "") {
+          errors.push({ source: "body", message: "Body can't be empty" });
+        }
+        if (errors.length > 0) {
+          return { errors };
+        }
+        const postToBeUpdated = {
+          title,
+          body,
+        };
+        console.log("postToBeUpdated", postToBeUpdated);
+        const updatedPost = await db
+          .db("jwtCookie")
+          .collection("posts")
+          .findOneAndReplace(
+            { _id: new ObjectID(_id) },
+            { $set: postToBeUpdated },
+            { returnOriginal: false }
+          );
+        console.log({ updatedPost });
+        pubsub.publish(POST_UPDATED, { postId: updatedPost.value._id });
+        if (!updatedPost.value) {
+          return { error: { message: "Error updating the Post" } };
+        }
+        return updatedPost.value;
+      } catch (err) {
+        console.log("err", err);
+        return { error: { message: "Something went wrong internally" } };
+      }
+    },
   },
   Subscription: {
     postAdded: {
@@ -99,6 +145,19 @@ export const postResolvers: Resolvers = {
       //           return connection.pubsub.asyncIterator(POST_ADDED, args.post)
       //         }
       //       },
+    },
+    postUpdated: {
+      subscribe: withFilter(
+        (_, __, { connection }) =>
+          connection.pubsub.asyncIterator(POST_UPDATED),
+        (payload, variables) => {
+          console.log({ payload });
+          console.log({ variables });
+          if (true) {
+            return true;
+          }
+        }
+      ),
     },
   },
 };

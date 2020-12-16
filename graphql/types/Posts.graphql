@@ -15,14 +15,22 @@ input CreatePostInput {
   body: String!
 }
 
+input UpdatePostInput {
+  _id: ID!
+  title: String
+  body: String
+}
+
 type Query {
   post(id: String!): CreatePostRes!
 }
 
 type Mutation {
   createPost(options: CreatePostInput!): CreatePostRes!
+  updatePost(updates: UpdatePostInput!): CreatePostRes!
 }
 
 type Subscription {
   postAdded: Post!
+  postUpdated(postId: String!): Post!
 }
