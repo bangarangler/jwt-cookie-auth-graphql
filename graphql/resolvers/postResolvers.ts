@@ -90,25 +90,24 @@ export const postResolvers: Resolvers = {
         if (errors.length > 0) {
           return { errors };
         }
-        const postToBeUpdated = {
-          title,
-          body,
-        };
-        console.log("postToBeUpdated", postToBeUpdated);
+        // console.log("postToBeUpdated", postToBeUpdated);
         const updatedPost = await db
           .db("jwtCookie")
           .collection("posts")
-          .findOneAndReplace(
+          .findOneAndUpdate(
             { _id: new ObjectID(_id) },
-            { $set: postToBeUpdated },
-            { returnOriginal: false }
+            { $set: { title: title, body: body } },
+            {
+              returnOriginal: false,
+            }
           );
-        console.log({ updatedPost });
-        pubsub.publish(POST_UPDATED, { postId: updatedPost.value._id });
         if (!updatedPost.value) {
           return { error: { message: "Error updating the Post" } };
         }
-        return updatedPost.value;
+        pubsub.publish(POST_UPDATED, {
+          postUpdated: { post: updatedPost.value },
+        });
+        return { post: updatedPost.value };
       } catch (err) {
         console.log("err", err);
         return { error: { message: "Something went wrong internally" } };
@@ -120,42 +119,20 @@ export const postResolvers: Resolvers = {
       subscribe: (_, __, { connection }) => {
         return connection.pubsub.asyncIterator(POST_ADDED);
       },
-      // subscribe: withFilter(
-      //   (_, __, { connection }) => connection.pubsub.asyncIterator(POST_ADDED),
-      //   (payload, _) => {
-      //     console.log("payload", payload);
-      //     // return payload;
-      //     // withFilter returns bool value
-      //     return true;
-      //   }
-      // ),
-      //       subscribe: (_, args, { connection }): Promise<Post> => {
-      //         const POST_ADDED = "POST_ADDED"
-      //         // console.log("connection from subscription", connection.context);
-      //         console.log("connection from subscribe", connection);
-      //         console.log("connection.context", connection.context);
-      //         // if (!connection.context.req.session.userId) {
-      //         // console.log("no user!!!!!! NOPE NOPE NOPE");
-      //         // }
-      //         // console.log("connection", connection);
-      //         // console.log("connection", connection);
-      //         // console.log("pubsub", connection.pubsub);
-      //         // return connection.pubsub.asyncIterator(SOMETHING_CHANGED);
-      //         if (args.userId === args.post._id) {
-      //           return connection.pubsub.asyncIterator(POST_ADDED, args.post)
-      //         }
-      //       },
     },
     postUpdated: {
       subscribe: withFilter(
-        (_, __, { connection }) =>
-          connection.pubsub.asyncIterator(POST_UPDATED),
+        (_, __, { connection }) => {
+          return connection.pubsub.asyncIterator(POST_UPDATED);
+        },
         (payload, variables) => {
-          console.log({ payload });
-          console.log({ variables });
-          if (true) {
+          if (
+            payload.postUpdated.post._id.toString() ===
+            variables.postId.toString()
+          ) {
             return true;
           }
+          return false;
         }
       ),
     },

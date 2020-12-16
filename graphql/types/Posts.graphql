@@ -21,6 +21,11 @@ input UpdatePostInput {
   body: String
 }
 
+type PostSubscriptionRes {
+  post: Post
+  error: GeneralError
+}
+
 type Query {
   post(id: String!): CreatePostRes!
 }
@@ -32,5 +37,5 @@ type Mutation {
 
 type Subscription {
   postAdded: Post!
-  postUpdated(postId: String!): Post!
+  postUpdated(postId: String!): PostSubscriptionRes!
 }

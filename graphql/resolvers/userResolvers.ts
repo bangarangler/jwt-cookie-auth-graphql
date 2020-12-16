@@ -135,8 +135,6 @@ export const userResolvers: Resolvers = {
         const cookies = setTokenCookies({ accessToken, refreshToken });
         req.session.refresh = cookies.refresh[1];
         req.session.userId = user.ops[0]._id;
-        // console.log("cookies.refresh", cookies.refresh);
-        // console.log("session from register", req.session);
         return { user: user.ops[0], accessToken };
       } catch (err) {
         console.log("err from register", err);
@@ -155,15 +153,8 @@ export const userResolvers: Resolvers = {
   Subscription: {
     somethingChanged: {
       subscribe: (_, __, { connection }) => {
-        // console.log("connection from subscription", connection.context);
         console.log("connection from subscribe", connection);
         console.log("connection.context", connection.context);
-        // if (!connection.context.req.session.userId) {
-        // console.log("no user!!!!!! NOPE NOPE NOPE");
-        // }
-        // console.log("connection", connection);
-        // console.log("connection", connection);
-        // console.log("pubsub", connection.pubsub);
         return connection.pubsub.asyncIterator(SOMETHING_CHANGED);
       },
     },
