@@ -185,14 +185,15 @@ export const userResolvers: Resolvers = {
       );
 
       // const cookies = setTokenCookies({ tokenToEmail, tokenToSession });
-      const setForgotCookies = ({ tokenToEmail }: any) => {
-        return {
-          forgotPassword: ["forgotPassword", tokenToEmail],
-        };
-      };
-      const cookies = setForgotCookies({ tokenToEmail });
+      // const setForgotCookies = ({ tokenToEmail }: any) => {
+      //   return {
+      //     forgotPassword: ["forgotPassword", tokenToEmail],
+      //   };
+      // };
+      // const cookies = setForgotCookies({ tokenToEmail });
 
-      req.session.forgotPassword = cookies.forgotPassword[1];
+      // req.session.forgotPassword = cookies.forgotPassword[1];
+      req.session.forgotPassword = tokenToEmail;
       req.session.userId = foundUser._id;
       const preset = `?token=${tokenToEmail}`;
       // return { user: user.ops[0], accessToken };
@@ -205,7 +206,7 @@ export const userResolvers: Resolvers = {
     changePassword: async (_, { options }, { db, req, res }) => {
       const { password, confirmPassword, accessToken } = options;
       const errors: any = [];
-      console.log("req", req);
+      // console.log("req", req);
       if (res.cookie) {
         console.log("deleteing hank");
         await res.clearCookie(COOKIE_NAME);
@@ -213,6 +214,7 @@ export const userResolvers: Resolvers = {
 
       try {
         if (!accessToken || accessToken === "") {
+          console.log("no accessToken or it's bad");
           errors.push({
             source: "accessToken",
             message: "Bad Access Token",
@@ -220,11 +222,26 @@ export const userResolvers: Resolvers = {
         }
         const validToken = verify(accessToken, process.env.ACCESS_TOKEN!);
         console.log("validToken", validToken);
-        console.log("MATCH", accessToken !== req.session.forgotPassword);
-        if (accessToken !== req.session.forgotPassword) {
+        console.log("req.session.forgotPassword", req.session.forgotPassword);
+        console.log(
+          "MATCH",
+          JSON.stringify(accessToken) !==
+            JSON.stringify(req.session.forgotPassword)
+        );
+        const validSessionToken = verify(
+          req.session.forgotPassword,
+          process.env.ACCESS_TOKEN!
+        );
+        console.log("validSessionToken", validSessionToken);
+        if (!validSessionToken) {
+          return { error: { message: "Bad Token" } };
+        }
+        if (JSON.stringify(validToken) !== JSON.stringify(validSessionToken)) {
+          console.log("validToken not equeal to validSessionToken");
           return { error: { message: "to long has passed try again" } };
         }
         if (!password || password === "") {
+          console.log("passwords don't match");
           errors.push({ source: "password", message: "Bad password" });
         }
         if (!confirmPassword || confirmPassword === "") {
@@ -245,6 +262,7 @@ export const userResolvers: Resolvers = {
           return { errors };
         }
         const user: any = verify(accessToken, process.env.ACCESS_TOKEN!);
+        console.log("user from accessToken changePW", user);
         if (!user && !user.userId) {
           return {
             error: {
@@ -257,7 +275,7 @@ export const userResolvers: Resolvers = {
           .db("jwtCookie")
           .collection("users")
           .findOne({ _id: new ObjectID(user.userId) });
-        console.log("foundUser", foundUser);
+        console.log("foundUser from changePW", foundUser);
         if (!foundUser) {
           return { error: { message: "Sorry No user found try registering" } };
         }
@@ -266,24 +284,27 @@ export const userResolvers: Resolvers = {
         console.log({ hashedPW });
         const filter = { _id: new ObjectID(user.userId) };
         const updates = { $set: { password: hashedPW } };
-        console.log("filter", filter);
         const updatedUser = await db
           .db("jwtCookie")
           .collection("users")
           .findOneAndUpdate(filter, updates, { returnOriginal: false });
-        console.log("updatedUser", updatedUser);
+        console.log("updatedUser from changePW", updatedUser);
         if (!updatedUser) {
           return {
             error: { message: "Could not update the user at this time." },
           };
         } else {
           const { accessToken, refreshToken } = setTokens(updatedUser.value);
+          console.log({ accessToken });
+          console.log({ refreshToken });
           const cookies = setTokenCookies({ accessToken, refreshToken });
+          console.log({ cookies });
 
           console.log("session destroyed");
-          req.session.destroy;
+          req.session.destroy();
           req.session.refresh = cookies.refresh[1];
           req.session.userId = updatedUser.value._id;
+          console.log("req.session", req.session);
 
           return { user: updatedUser.value, accessToken };
         }
