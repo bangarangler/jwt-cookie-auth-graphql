@@ -43,11 +43,18 @@ type Query {
   me: User
 }
 
+input ChangePasswordInput {
+  password: String!
+  confirmPassword: String!
+  accessToken: String!
+}
+
 type Mutation {
   register(input: UserRegisterInput!): RegisterResponse!
   login(input: UserLoginInput!): LoginResponse!
   logout: Boolean
   forgotPassword(email: String!): Boolean!
+  changePassword(options: ChangePasswordInput!): LoginResponse!
 }
 
 type Subscription {

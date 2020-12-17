@@ -161,7 +161,7 @@ export const userResolvers: Resolvers = {
       return true;
     },
     forgotPassword: async (_, { email }, { db, req }) => {
-      const foundUser = db
+      const foundUser = await db
         .db("jwtCookie")
         .collection("users")
         .findOne({ email });
@@ -188,12 +188,103 @@ export const userResolvers: Resolvers = {
 
       req.session.forgotPassword = cookies.forgotPassword[1];
       req.session.userId = foundUser._id;
+      const preset = `?token=${tokenToEmail}`;
       // return { user: user.ops[0], accessToken };
       await sendEmail(
         email,
-        `<a href="http://localhost:3000/change-password/${tokenToEmail}">reset password</a>`
+        `<a href="http://localhost:3000/change-password${preset}">reset password</a>`
       );
       return true;
+    },
+    changePassword: async (_, { options }, { db, req, res }) => {
+      const { password, confirmPassword, accessToken } = options;
+      const errors: any = [];
+      console.log("req", req);
+      if (res.cookie) {
+        console.log("deleteing hank");
+        await res.clearCookie(COOKIE_NAME);
+      }
+
+      try {
+        if (!accessToken || accessToken === "") {
+          errors.push({
+            source: "accessToken",
+            message: "Bad Access Token",
+          });
+        }
+        const validToken = verify(accessToken, process.env.ACCESS_TOKEN!);
+        console.log("validToken", validToken);
+        console.log("MATCH", accessToken !== req.session.forgotPassword);
+        if (accessToken !== req.session.forgotPassword) {
+          return { error: { message: "to long has passed try again" } };
+        }
+        if (!password || password === "") {
+          errors.push({ source: "password", message: "Bad password" });
+        }
+        if (!confirmPassword || confirmPassword === "") {
+          errors.push({
+            source: "confirmPassword",
+            message: "Bad password",
+          });
+        }
+        if (
+          password.toLowerCase().trim() !== confirmPassword.toLowerCase().trim()
+        ) {
+          errors.push({
+            source: "password",
+            message: "Passwords don't match!",
+          });
+        }
+        if (errors.length > 0) {
+          return { errors };
+        }
+        const user: any = verify(accessToken, process.env.ACCESS_TOKEN!);
+        if (!user && !user.userId) {
+          return {
+            error: {
+              message:
+                "Invalid Token... may need to resubmit if longer than hour",
+            },
+          };
+        }
+        const foundUser = await db
+          .db("jwtCookie")
+          .collection("users")
+          .findOne({ _id: new ObjectID(user.userId) });
+        console.log("foundUser", foundUser);
+        if (!foundUser) {
+          return { error: { message: "Sorry No user found try registering" } };
+        }
+        // const validPw = await bcrypt.compare(foundUser.password, password);
+        const hashedPW = await bcrypt.hash(password, 12);
+        console.log({ hashedPW });
+        const filter = { _id: new ObjectID(user.userId) };
+        const updates = { $set: { password: hashedPW } };
+        console.log("filter", filter);
+        const updatedUser = await db
+          .db("jwtCookie")
+          .collection("users")
+          .findOneAndUpdate(filter, updates, { returnOriginal: false });
+        console.log("updatedUser", updatedUser);
+        if (!updatedUser) {
+          return {
+            error: { message: "Could not update the user at this time." },
+          };
+        } else {
+          const { accessToken, refreshToken } = setTokens(updatedUser.value);
+          const cookies = setTokenCookies({ accessToken, refreshToken });
+
+          console.log("session destroyed");
+          req.session.destroy;
+          req.session.refresh = cookies.refresh[1];
+          req.session.userId = updatedUser.value._id;
+
+          return { user: updatedUser.value, accessToken };
+        }
+      } catch (err) {
+        console.log("err");
+        return { error: { message: "Something went wrong internally" } };
+      }
     },
   },
   Subscription: {
