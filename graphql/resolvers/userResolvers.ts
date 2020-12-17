@@ -41,11 +41,11 @@ export const userResolvers: Resolvers = {
     // me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
     me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
       const accessToken = req.headers["bearer"];
-      if (req.session.userId) {
+      if (req?.session?.userId) {
         const sessionUser = req.session.userId;
         console.log("sessionUser", sessionUser);
       }
-      if (req.session.refresh) {
+      if (req?.session?.refresh) {
         const refreshToken = req.session.refresh;
         console.log("refreshToken", refreshToken);
       }
@@ -59,6 +59,7 @@ export const userResolvers: Resolvers = {
         }
       };
       const validUser = validateAccessToken(accessToken);
+      if (!validUser) return null;
       // console.log({ validUser });
       const user = await db
         .db("jwtCookie")
@@ -157,8 +158,13 @@ export const userResolvers: Resolvers = {
     },
     logout: async (_, __, { res, req }, ____) => {
       res.clearCookie(COOKIE_NAME);
-      req.session.destroy;
-      return true;
+      const destroyed = await req.session.destroy();
+      console.log({ destroyed });
+      if (destroyed.userId) {
+        return true;
+      }
+      // not logged out
+      return false;
     },
     forgotPassword: async (_, { email }, { db, req }) => {
       const foundUser = await db
