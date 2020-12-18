@@ -21,13 +21,9 @@ export const validateTokensMiddleware = async (
   // Try to Get JWT from Headers and refresh JWT from session
   const accessToken = req?.headers["bearer"];
   const refreshToken = req?.session?.refresh;
-  // no tokens ... don't know you... go to login or register
-  // if (!accessToken && !refreshToken && !req.session.userId) {
-  //   throw new ApolloError("Not Authenticated");
-  // }
+  console.log("accessToken", accessToken);
+
   if (!accessToken && !refreshToken) {
-    // is this needed?
-    // req.session.destroy;
     return next();
   }
 
@@ -38,7 +34,7 @@ export const validateTokensMiddleware = async (
     const decodedAccessToken = validateAccessToken(accessToken) as any;
     // token is valid and token has userId
     console.log("decodedAccessToken :>> ", decodedAccessToken);
-    console.log("Date.now() :>> ", Date.now());
+    // console.log("Date.now() :>> ", Date.now());
     if (decodedAccessToken && decodedAccessToken.userId) {
       console.log("Access token is valid");
       // set userId to session
@@ -82,7 +78,6 @@ export const validateTokensMiddleware = async (
         "Access-Control-Expose-Headers": "bearer",
         bearer: userTokens.accessToken,
       });
-      console.log("res :>> ", res);
       // make refresh token and set to session
       const cookies = setTokenCookies(userTokens);
       console.log("req.session.refresh before:>> ", req.session.refresh);
