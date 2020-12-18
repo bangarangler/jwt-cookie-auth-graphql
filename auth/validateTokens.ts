@@ -8,7 +8,11 @@ import { verify } from "jsonwebtoken";
 
 export const validateAccessToken = (token: string): null | any => {
   try {
-    return verify(token, process.env.ACCESS_TOKEN!);
+    const data: any = verify(token, process.env.ACCESS_TOKEN!);
+    if (data?.exp > Date.now() / 1000) {
+      return data;
+    }
+    return null;
   } catch (err) {
     console.log("err", err);
     return null;
@@ -17,7 +21,11 @@ export const validateAccessToken = (token: string): null | any => {
 
 export const validateRefreshToken = (token: string): null | any => {
   try {
-    return verify(token, process.env.REFRESH_ACCESS_TOKEN!);
+    const data: any = verify(token, process.env.REFRESH_ACCESS_TOKEN!);
+    if (data?.exp > Date.now() / 1000) {
+      return data;
+    }
+    return null;
   } catch (err) {
     console.log("err", err);
     return null;

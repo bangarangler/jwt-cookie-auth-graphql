@@ -3,16 +3,16 @@ import { sign } from "jsonwebtoken";
 import { __prod__ } from "../constants";
 
 export const setTokens = (user: User) => {
-  const sevenDays = 60 * 60 * 24 * 7 * 1000;
-  const fifteenMins = 60 * 15 * 1000;
+  // const sevenDays = '7d';
+  // const fifteenMins = 60 * 15 * 1000;
   const accessUser = user._id;
 
   // console.log("accessUser", accessUser);
 
   const accessToken = sign({ userId: accessUser }, process.env.ACCESS_TOKEN!, {
-    expiresIn: fifteenMins,
+    // expiresIn: '15m',
     // expiresIn: 1000 * 15,
-    // expiresIn: 1,
+    expiresIn: "60s",
   });
   // console.log("accessToken", accessToken);
 
@@ -27,8 +27,8 @@ export const setTokens = (user: User) => {
       user: refreshUser,
     },
     process.env.REFRESH_ACCESS_TOKEN!,
-    { expiresIn: sevenDays }
-    // { expiresIn: 1000 * 30 }
+    // { expiresIn: sevenDays }
+    { expiresIn: "90s" }
     // { expiresIn: 5 }
   );
   // console.log("refreshToken", refreshToken);

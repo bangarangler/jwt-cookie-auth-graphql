@@ -37,6 +37,8 @@ export const validateTokensMiddleware = async (
     // check if accessToken is still valid and if so give us the user.
     const decodedAccessToken = validateAccessToken(accessToken) as any;
     // token is valid and token has userId
+    console.log("decodedAccessToken :>> ", decodedAccessToken);
+    console.log("Date.now() :>> ", Date.now());
     if (decodedAccessToken && decodedAccessToken.userId) {
       console.log("Access token is valid");
       // set userId to session
@@ -72,13 +74,24 @@ export const validateTokensMiddleware = async (
       }
       // make new refresh and access from the user from db
       const userTokens = setTokens(user);
+      console.log(
+        "userTokens.accessToken HERE!!!!!!!!!!!!!!!!!!!! :>> ",
+        userTokens.accessToken
+      );
       res.set({
         "Access-Control-Expose-Headers": "bearer",
         bearer: userTokens.accessToken,
       });
+      console.log("res :>> ", res);
       // make refresh token and set to session
       const cookies = setTokenCookies(userTokens);
-      req.session.refresh = cookies.refresh;
+      console.log("req.session.refresh before:>> ", req.session.refresh);
+      req.session.refresh = cookies.refresh[1];
+      console.log("req.session.refresh after:>> ", req.session.refresh);
+      console.log("req.session.cookie before :>> ", req.session.cookie);
+      req.session.cookie.maxAge = 1000 * 30;
+      console.log("req.session.cookie after :>> ", req.session.cookie);
+
       console.log("Refreshing session cookies");
       return next();
     }
