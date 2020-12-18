@@ -6,5 +6,6 @@ declare namespace NodeJS {
     MONGO_STRING: string;
     REDIS_HOST: string;
     REDIS_PORT: string;
+    REDIS_SECRET: string;
   }
 }

@@ -14,6 +14,9 @@ export const validateTokensMiddleware = async (
   next: any,
   db?: any
 ) => {
+  console.log(
+    "======================================================================="
+  );
   console.log("middleware running...");
   // Try to Get JWT from Headers and refresh JWT from session
   const accessToken = req?.headers["bearer"];
@@ -30,10 +33,12 @@ export const validateTokensMiddleware = async (
 
   // if you have been here before...
   if (accessToken) {
+    console.log("checking access token");
     // check if accessToken is still valid and if so give us the user.
     const decodedAccessToken = validateAccessToken(accessToken) as any;
     // token is valid and token has userId
     if (decodedAccessToken && decodedAccessToken.userId) {
+      console.log("Access token is valid");
       // set userId to session
       req.session.userId = decodedAccessToken.userId;
       return next();
@@ -42,9 +47,11 @@ export const validateTokensMiddleware = async (
 
   // no accessToken so check refreshToken from coookie-session
   if (refreshToken) {
+    console.log("checking refresh token");
     const decodedRefreshToken = validateRefreshToken(refreshToken);
     // if it's valid and there is a user
     if (decodedRefreshToken && decodedRefreshToken.user) {
+      console.log("refresh token exists");
       // fetch the user from db
       const user = await db
         .db("jwtCookie")
@@ -57,6 +64,7 @@ export const validateTokensMiddleware = async (
         !user ||
         user.tokenVersion !== decodedRefreshToken.user.tokenVersion
       ) {
+        console.log("destroying session and clearing cookies");
         res.clearCookie(COOKIE_NAME);
         req.session.destroy();
         // consider 401 here
@@ -71,6 +79,7 @@ export const validateTokensMiddleware = async (
       // make refresh token and set to session
       const cookies = setTokenCookies(userTokens);
       req.session.refresh = cookies.refresh;
+      console.log("Refreshing session cookies");
       return next();
     }
   }

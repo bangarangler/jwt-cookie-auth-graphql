@@ -67,6 +67,9 @@ const main = async () => {
         store: new RedisStore({ client: redis, disableTouch: true }),
         cookie: {
           maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
+          // maxAge: 1000 * 60, // 30 sec
+          // maxAge: 5000,
+          // maxAge: 5000,
           // maxAge: 10000, // 10 years
           httpOnly: __prod__,
           sameSite: "lax",

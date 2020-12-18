@@ -11,6 +11,8 @@ export const setTokens = (user: User) => {
 
   const accessToken = sign({ userId: accessUser }, process.env.ACCESS_TOKEN!, {
     expiresIn: fifteenMins,
+    // expiresIn: 1000 * 15,
+    // expiresIn: 1,
   });
   // console.log("accessToken", accessToken);
 
@@ -26,6 +28,8 @@ export const setTokens = (user: User) => {
     },
     process.env.REFRESH_ACCESS_TOKEN!,
     { expiresIn: sevenDays }
+    // { expiresIn: 1000 * 30 }
+    // { expiresIn: 5 }
   );
   // console.log("refreshToken", refreshToken);
 
