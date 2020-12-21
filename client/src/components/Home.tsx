@@ -6,19 +6,24 @@ import { deleteUser } from "../utilsFE/tempToken";
 const Home: FC = () => {
   const [logout] = useLogoutMutation();
   const apollo = useApolloClient();
-  // const { data, loading, error } = useMeQuery();
+  const { data, loading, error } = useMeQuery({});
 
-  // if (loading) {
-  //   return <div>loading...</div>;
-  // }
-  //
-  // if (error) {
-  //   return <div>Error {error}</div>;
-  // }
+  useEffect(() => {
+    console.log("data", data);
+  }, [data]);
+
+  if (loading) {
+    return <div>loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error {error}</div>;
+  }
 
   return (
     <div>
       HOME PAGE
+      <p>{data?.me?.username}</p>
       <button
         onClick={async () => {
           await logout();

@@ -19,6 +19,7 @@ export const validateTokensMiddleware = async (
   );
   console.log("middleware running...");
   // Try to Get JWT from Headers and refresh JWT from session
+  console.log("req.headers", req.headers);
   const accessToken = req?.headers["bearer"];
   const refreshToken = req?.session?.refresh;
   console.log("accessToken", accessToken);
