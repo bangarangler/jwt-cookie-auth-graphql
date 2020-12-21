@@ -16,7 +16,12 @@ import connectRedis from "connect-redis";
 // import { permissions } from "./permissions";
 // import { makeExecutableSchema } from "graphql-tools";
 // GENERATED / IMPORTS
-import { COOKIE_NAME, __prod_cors__, __prod__ } from "./constants";
+import {
+  COOKIE_JWT_REFRESH_TIME,
+  COOKIE_NAME,
+  __prod_cors__,
+  __prod__,
+} from "./constants";
 import { typeDefs } from "./graphql/typeDefs";
 import { resolvers } from "./graphql/resolvers";
 import { ServerContext } from "./ServerContext";
@@ -67,9 +72,10 @@ const main = async () => {
         store: new RedisStore({ client: redis, disableTouch: true }),
         cookie: {
           // maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
-          maxAge: 90000, // 30 sec
+          // maxAge: 90000, // 30 sec
           // maxAge: 5000,
           // maxAge: 5000,
+          maxAge: COOKIE_JWT_REFRESH_TIME,
           httpOnly: __prod__,
           sameSite: "lax",
           secure: __prod__, // cookie only works in https

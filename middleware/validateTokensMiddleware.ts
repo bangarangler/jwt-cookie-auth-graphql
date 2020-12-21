@@ -3,7 +3,7 @@ import {
   validateRefreshToken,
 } from "../auth/validateTokens";
 import { ObjectID } from "mongodb";
-import { COOKIE_NAME } from "../constants";
+import { COOKIE_JWT_REFRESH_TIME, COOKIE_NAME } from "../constants";
 import { setTokenCookies, setTokens } from "../auth/authTokens"; // double check this as well
 // import { ApolloError } from "apollo-server-express";
 // import { COOKIE_NAME } from "../constants";
@@ -84,7 +84,7 @@ export const validateTokensMiddleware = async (
       req.session.refresh = cookies.refresh[1];
       console.log("req.session.refresh after:>> ", req.session.refresh);
       console.log("req.session.cookie before :>> ", req.session.cookie);
-      req.session.cookie.maxAge = 1000 * 30;
+      req.session.cookie.maxAge = COOKIE_JWT_REFRESH_TIME;
       console.log("req.session.cookie after :>> ", req.session.cookie);
 
       console.log("Refreshing session cookies");

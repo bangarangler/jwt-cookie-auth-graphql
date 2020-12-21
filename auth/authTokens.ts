@@ -1,6 +1,10 @@
 import { User } from "../codeGenBE";
 import { sign } from "jsonwebtoken";
-import { __prod__ } from "../constants";
+import {
+  COOKIE_JWT_REFRESH_TIME,
+  JWT_ACCESS_TOKEN_TIME,
+  __prod__,
+} from "../constants";
 
 export const setTokens = (user: User) => {
   // const sevenDays = '7d';
@@ -12,7 +16,7 @@ export const setTokens = (user: User) => {
   const accessToken = sign({ userId: accessUser }, process.env.ACCESS_TOKEN!, {
     // expiresIn: '15m',
     // expiresIn: 1000 * 15,
-    expiresIn: "60s",
+    expiresIn: JWT_ACCESS_TOKEN_TIME,
   });
   // console.log("accessToken", accessToken);
 
@@ -28,7 +32,7 @@ export const setTokens = (user: User) => {
     },
     process.env.REFRESH_ACCESS_TOKEN!,
     // { expiresIn: sevenDays }
-    { expiresIn: "90s" }
+    { expiresIn: COOKIE_JWT_REFRESH_TIME }
     // { expiresIn: 5 }
   );
   // console.log("refreshToken", refreshToken);

@@ -4,6 +4,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 import {
   ApolloClient,
   ApolloProvider,
+  // ApolloLink,
   // createHttpLink,
   InMemoryCache,
 } from "@apollo/client";
@@ -12,6 +13,19 @@ import "./index.css";
 import App from "./App";
 // import { getTokens, saveTokens } from "./utilsFE/tempToken";
 
+// const authMiddleware = new ApolloLink((operation, forward) => {
+//   // add the authorization to the headers
+//   operation.setContext(({ headers = {} }) => ({
+//     headers: {
+//       ...headers,
+//       authorization: localStorage.getItem('token') || null,
+//     }
+//   }));
+//
+//   return forward(operation);
+// })
+
+// OLD hard way with cookies does work
 // const httpLink = createHttpLink({
 //   uri: "http://localhost:4000/graphql",
 //   fetch: async (uri, options) => {
@@ -44,6 +58,7 @@ import App from "./App";
 // });
 
 const client = new ApolloClient({
+  // not needed if doing with cookies
   // link: authLink.concat(httpLink),
   uri: "http://localhost:4000/graphql",
   cache: new InMemoryCache(),

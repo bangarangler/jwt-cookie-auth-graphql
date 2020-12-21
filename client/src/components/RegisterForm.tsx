@@ -1,12 +1,20 @@
-import React, { FC, useReducer } from "react";
+import React, { FC, ReactElement, useEffect, useReducer } from "react";
+import { useRegisterMutation } from "../codeGenFE";
 
 type State = {
   username: string;
   password: string;
   confirmPassword: string;
+  email: string;
+  localLoading: ReactElement | null;
 };
 
-type Action = { type: "input"; field: string; payload: string };
+type Action =
+  | { type: "input"; field: string; payload: string }
+  | {
+      type: "local loading";
+      localLoading: ReactElement;
+    };
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
@@ -14,6 +22,11 @@ const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         [action.field]: action.payload,
+      };
+    case "local loading":
+      return {
+        ...state,
+        localLoading: <p>Loading</p>,
       };
     default:
       return state;
@@ -24,17 +37,48 @@ const initState = {
   username: "",
   password: "",
   confirmPassword: "",
+  email: "",
+  localLoading: null,
 };
 
 const RegisterForm: FC = () => {
   const [state, dispatch] = useReducer(reducer, initState);
-  const { username, password, confirmPassword } = state;
+  const { username, password, email, confirmPassword, localLoading } = state;
+  const [register, { data, loading, error }] = useRegisterMutation({
+    variables: {
+      input: {
+        username,
+        password,
+        email,
+        confirmPassword,
+      },
+    },
+  });
+
+  useEffect(() => {
+    console.log({ data });
+  }, [data]);
+
+  if (loading) {
+    // if (loading) {
+    //   dispatch({ type: "local loading", localLoading: <p>loading...</p> });
+    // }
+    return <div>loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
   return (
     <form
-      onSubmit={() => {
+      onSubmit={async (e) => {
+        e.preventDefault();
         console.log("register");
-      }}
-    >
+        const test = await register();
+        console.log("test", test);
+      }}>
+      {/*{!loading && { localLoading }}*/}
       <label htmlFor="username">Username</label>
       <input
         type="text"
@@ -44,6 +88,19 @@ const RegisterForm: FC = () => {
           dispatch({
             type: "input",
             field: "username",
+            payload: e.target.value,
+          })
+        }
+      />
+      <label htmlFor="email">Email</label>
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) =>
+          dispatch({
+            type: "input",
+            field: "email",
             payload: e.target.value,
           })
         }
@@ -74,7 +131,9 @@ const RegisterForm: FC = () => {
           })
         }
       />
-      <button type="submit">Register</button>
+      <button type="submit" disabled={loading}>
+        Register
+      </button>
     </form>
   );
 };

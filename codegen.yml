@@ -13,15 +13,15 @@ generates:
       - "typescript-mongodb"
       - "fragment-matcher"
       - "typescript-document-nodes"
-  # ./client/src/codeGenFE/index.tsx:
-  #   documents: ./client/src/codeGenFE/**/*.graphql
-  #   plugins:
-  #     - "typescript"
-  #     - "typescript-operations"
-  #     - "typescript-react-apollo"
-  #   config:
-  #     skipTypename: false
-  #     withHooks: true
-  #     withHOC: false
-  #     withComponent: false
-  #     apolloReactHooksImportFrom: "@apollo/client"
+  ./client/src/codeGenFE/index.tsx:
+    documents: ./client/src/codeGenFE/**/*.graphql
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-react-apollo"
+    config:
+      skipTypename: false
+      withHooks: true
+      withHOC: false
+      withComponent: false
+      apolloReactHooksImportFrom: "@apollo/client"
