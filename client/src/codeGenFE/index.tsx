@@ -14,6 +14,25 @@ export type Scalars = {
   Float: number;
 };
 
+export type TokenResponse = {
+  __typename?: 'TokenResponse';
+  accessToken?: Maybe<Scalars['String']>;
+  error?: Maybe<GeneralError>;
+};
+
+export type Query = {
+  __typename?: 'Query';
+  getToken: TokenResponse;
+  post: CreatePostRes;
+  loggedInUser?: Maybe<User>;
+  me?: Maybe<User>;
+};
+
+
+export type QueryPostArgs = {
+  id: Scalars['String'];
+};
+
 export type GeneralError = {
   __typename?: 'GeneralError';
   message: Scalars['String'];
@@ -54,18 +73,6 @@ export type PostSubscriptionRes = {
   __typename?: 'PostSubscriptionRes';
   post?: Maybe<Post>;
   error?: Maybe<GeneralError>;
-};
-
-export type Query = {
-  __typename?: 'Query';
-  post: CreatePostRes;
-  loggedInUser?: Maybe<User>;
-  me?: Maybe<User>;
-};
-
-
-export type QueryPostArgs = {
-  id: Scalars['String'];
 };
 
 export type Mutation = {
@@ -119,12 +126,6 @@ export type Subscription = {
 
 export type SubscriptionPostUpdatedArgs = {
   postId: Scalars['String'];
-};
-
-export type Tokens = {
-  __typename?: 'Tokens';
-  accessToken?: Maybe<Scalars['String']>;
-  refreshToken?: Maybe<Scalars['String']>;
 };
 
 export type User = {
@@ -219,6 +220,21 @@ export type RegisterMutation = (
     )>>>, user?: Maybe<(
       { __typename?: 'User' }
       & Pick<User, '_id' | 'username' | 'tokenVersion' | 'email'>
+    )> }
+  ) }
+);
+
+export type GetTokenQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetTokenQuery = (
+  { __typename?: 'Query' }
+  & { getToken: (
+    { __typename?: 'TokenResponse' }
+    & Pick<TokenResponse, 'accessToken'>
+    & { error?: Maybe<(
+      { __typename?: 'GeneralError' }
+      & Pick<GeneralError, 'message'>
     )> }
   ) }
 );
@@ -354,6 +370,41 @@ export function useRegisterMutation(baseOptions?: ApolloReactHooks.MutationHookO
 export type RegisterMutationHookResult = ReturnType<typeof useRegisterMutation>;
 export type RegisterMutationResult = Apollo.MutationResult<RegisterMutation>;
 export type RegisterMutationOptions = Apollo.BaseMutationOptions<RegisterMutation, RegisterMutationVariables>;
+export const GetTokenDocument = gql`
+    query GetToken {
+  getToken {
+    accessToken
+    error {
+      message
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetTokenQuery__
+ *
+ * To run a query within a React component, call `useGetTokenQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetTokenQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTokenQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetTokenQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetTokenQuery, GetTokenQueryVariables>) {
+        return ApolloReactHooks.useQuery<GetTokenQuery, GetTokenQueryVariables>(GetTokenDocument, baseOptions);
+      }
+export function useGetTokenLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetTokenQuery, GetTokenQueryVariables>) {
+          return ApolloReactHooks.useLazyQuery<GetTokenQuery, GetTokenQueryVariables>(GetTokenDocument, baseOptions);
+        }
+export type GetTokenQueryHookResult = ReturnType<typeof useGetTokenQuery>;
+export type GetTokenLazyQueryHookResult = ReturnType<typeof useGetTokenLazyQuery>;
+export type GetTokenQueryResult = Apollo.QueryResult<GetTokenQuery, GetTokenQueryVariables>;
 export const MeDocument = gql`
     query Me {
   me {

@@ -1,7 +1,11 @@
 import { useApolloClient } from "@apollo/client";
 import React, { FC, useEffect } from "react";
 import { useLogoutMutation, useMeQuery } from "../codeGenFE";
-import { deleteUser } from "../utilsFE/tempToken";
+// import { deleteUser } from "../utilsFE/tempToken";
+
+interface Props {
+  bearer: string | null | undefined;
+}
 
 const Home: FC = () => {
   const [logout] = useLogoutMutation();
@@ -27,10 +31,11 @@ const Home: FC = () => {
       <button
         onClick={async () => {
           await logout();
-          deleteUser();
+          // deleteUser();
           apollo.cache.evict({ fieldName: "User" });
           apollo.cache.gc();
-        }}>
+        }}
+      >
         Logout
       </button>
     </div>

@@ -82,7 +82,8 @@ const LoginForm: FC = () => {
       onSubmit={() => {
         console.log("Login");
         login();
-      }}>
+      }}
+    >
       <label htmlFor="username">Username</label>
       <input
         type="text"

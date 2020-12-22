@@ -12,96 +12,116 @@ import {
 // import { setContext } from "@apollo/client/link/context";
 import "./index.css";
 import App from "./App";
+import axios from "axios";
+import { response } from "express";
+import { GetTokenDocument } from "./codeGenFE";
 // import { getTokens, saveTokens } from "./utilsFE/tempToken";
-let bearer = "";
 
-const authMiddleware = new ApolloLink((operation, forward) => {
-  console.log("auth middle ware hit...");
-  // add the authorization to the headers
-  operation.setContext(({ headers = {} }) => ({
-    headers: {
-      ...headers,
-      bearer: bearer, // add in auth from bearer
+async function start() {
+  let bearer: any = "";
+
+  const fetchTokenRes = await axios({
+    url: "http://localhost:4000/graphql",
+    method: "post",
+    data: {
+      query: `
+        query GetToken{
+          getToken{
+            accessToken
+            error {
+              message
+            }
+          }
+        }
+      `,
     },
-  }));
-
-  console.log({ operation });
-  return forward(operation).map((res) => {
-    console.log(
-      "res.data.register.accessToken",
-      res?.data?.register?.accessToken
-    );
-    if (
-      res?.data?.register?.accessToken &&
-      res.data.register.accessToken !== ""
-    ) {
-      console.log("if check have data.register.accessToken");
-      bearer = res?.data?.register?.accessToken;
-      console.log("bearer off register", bearer);
-    }
-    console.log("res.data.login.accessToken", res?.data?.login?.accessToken);
-    if (res?.data?.login?.accessToken && res.data.login.accessToken !== "") {
-      console.log("if check have data.login.accessToken");
-      bearer = res.data.login.accessToken;
-      console.log("bearer off login", bearer);
-    }
-    console.log("res", res);
-    return res;
+    withCredentials: true,
   });
-});
+  console.log("fetchTokenRes :>> ", fetchTokenRes);
+  if (fetchTokenRes?.headers?.bearer) {
+    bearer = fetchTokenRes.headers.bearer;
+  }
 
-const laterMiddleWare = new ApolloLink((operation, forward) => {
-  console.log("running later Middleware");
-  operation.setContext(({ headers = {} }) => ({
-    headers: {
-      ...headers,
-      bearer: bearer, // add in auth from bearer
-    },
-  }));
+  const authMiddleware = new ApolloLink((operation, forward) => {
+    // add the authorization to the headers
+    operation.setContext(({ headers = {} }) => ({
+      headers: {
+        ...headers,
+        bearer: bearer, // add in auth from bearer
+      },
+    }));
 
-  return forward(operation).map((response) => {
-    console.log("running getContext");
-    const context = operation.getContext();
-    const {
-      response: { headers },
-    } = context;
-    console.log("headers", headers);
-    if (headers && headers.get("bearer") !== "") {
-      bearer = headers.get("bearer");
-      console.log("bearer from getContext", bearer);
-      console.log("headers.get('bearer')", headers.get("bearer"));
-    }
-    return response;
+    return forward(operation).map((res) => {
+      // check if this is a registration call
+      if (
+        res?.data?.register?.accessToken &&
+        res.data.register.accessToken.length > 0
+      ) {
+        bearer = res?.data?.register?.accessToken;
+      }
+      // check if this is a login call
+      if (
+        res?.data?.login?.accessToken &&
+        res.data.login.accessToken.length > 0
+      ) {
+        bearer = res.data.login.accessToken;
+      }
+      return res;
+    });
   });
-});
 
-const httpLink = new HttpLink({
-  uri: "http://localhost:4000/graphql",
-  credentials: "include",
-});
+  const laterMiddleWare = new ApolloLink((operation, forward) => {
+    // console.log("running later Middleware");
+    operation.setContext(({ headers = {} }) => ({
+      headers: {
+        ...headers,
+        bearer: bearer, // add in auth from bearer
+      },
+    }));
 
-const client = new ApolloClient({
-  // not needed if doing with cookies
-  // link: authLink.concat(httpLink),
-  // link: authMiddleware.concat(httpLink),
-  // link: from([authMiddleware, laterMiddleWare, httpLink]),
-  link: authMiddleware.concat(laterMiddleWare).concat(httpLink),
-  // uri: "http://localhost:4000/graphql",
-  cache: new InMemoryCache(),
-  credentials: "include",
-});
+    return forward(operation).map((response) => {
+      const context = operation.getContext();
+      const {
+        response: { headers },
+      } = context;
+      // if fresh access token is sent, set it to the header
+      if (headers && headers?.get("bearer")?.length > 0) {
+        bearer = headers.get("bearer");
+      }
+      return response;
+    });
+  });
 
-ReactDOM.render(
-  <ApolloProvider client={client}>
-    <React.StrictMode>
-      <Router>
-        <App />
-      </Router>
-    </React.StrictMode>
-  </ApolloProvider>,
-  document.getElementById("root")
-);
+  const httpLink = new HttpLink({
+    uri: "http://localhost:4000/graphql",
+    credentials: "include",
+  });
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+  const client = new ApolloClient({
+    // not needed if doing with cookies
+    // link: authLink.concat(httpLink),
+    // link: authMiddleware.concat(httpLink),
+    // link: from([authMiddleware, laterMiddleWare, httpLink]),
+    link: authMiddleware.concat(laterMiddleWare).concat(httpLink),
+    // uri: "http://localhost:4000/graphql",
+    cache: new InMemoryCache(),
+    credentials: "include",
+  });
+
+  ReactDOM.render(
+    <ApolloProvider client={client}>
+      <React.StrictMode>
+        <Router>
+          <App />
+        </Router>
+      </React.StrictMode>
+    </ApolloProvider>,
+    document.getElementById("root")
+  );
+
+  // If you want to start measuring performance in your app, pass a function
+  // to log results (for example: reportWebVitals(console.log))
+  // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+}
+
+start();

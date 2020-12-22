@@ -1,0 +1,12 @@
+type TokenResponse {
+  accessToken: String
+  error: GeneralError
+}
+
+type Query {
+  getToken: TokenResponse!
+}
+
+# type Mutation {
+
+# }

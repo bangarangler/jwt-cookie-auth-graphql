@@ -19,10 +19,13 @@ export const validateTokensMiddleware = async (
   );
   console.log("middleware running...");
   // Try to Get JWT from Headers and refresh JWT from session
-  console.log("req.headers", req.headers);
+  // console.log("req.headers", req.headers);
   const accessToken = req?.headers["bearer"];
   const refreshToken = req?.session?.refresh;
-  console.log("accessToken", accessToken);
+  // console.log("accessToken", accessToken);
+
+  console.log("accessToken :>> ", accessToken);
+  console.log("refreshToken :>> ", refreshToken);
 
   if (!accessToken && !refreshToken) {
     return next();
@@ -30,14 +33,14 @@ export const validateTokensMiddleware = async (
 
   // if you have been here before...
   if (accessToken) {
-    console.log("checking access token");
+    // console.log("checking access token");
     // check if accessToken is still valid and if so give us the user.
     const decodedAccessToken = validateAccessToken(accessToken) as any;
     // token is valid and token has userId
     console.log("decodedAccessToken :>> ", decodedAccessToken);
     // console.log("Date.now() :>> ", Date.now());
     if (decodedAccessToken && decodedAccessToken.userId) {
-      console.log("Access token is valid");
+      // console.log("Access token is valid");
       // set userId to session
       req.session.userId = decodedAccessToken.userId;
       return next();
@@ -45,12 +48,13 @@ export const validateTokensMiddleware = async (
   }
 
   // no accessToken so check refreshToken from coookie-session
+  console.log("refreshToken :>> ", refreshToken);
   if (refreshToken) {
     console.log("checking refresh token");
     const decodedRefreshToken = validateRefreshToken(refreshToken);
     // if it's valid and there is a user
     if (decodedRefreshToken && decodedRefreshToken.user) {
-      console.log("refresh token exists");
+      // console.log("refresh token exists");
       // fetch the user from db
       const user = await db
         .db("jwtCookie")
@@ -63,7 +67,7 @@ export const validateTokensMiddleware = async (
         !user ||
         user.tokenVersion !== decodedRefreshToken.user.tokenVersion
       ) {
-        console.log("destroying session and clearing cookies");
+        // console.log("destroying session and clearing cookies");
         res.clearCookie(COOKIE_NAME);
         req.session.destroy();
         // consider 401 here
@@ -71,22 +75,14 @@ export const validateTokensMiddleware = async (
       }
       // make new refresh and access from the user from db
       const userTokens = setTokens(user);
-      console.log(
-        "userTokens.accessToken HERE!!!!!!!!!!!!!!!!!!!! :>> ",
-        userTokens.accessToken
-      );
       res.set({
         "Access-Control-Expose-Headers": "bearer",
         bearer: userTokens.accessToken,
       });
       // make refresh token and set to session
       const cookies = setTokenCookies(userTokens);
-      console.log("req.session.refresh before:>> ", req.session.refresh);
       req.session.refresh = cookies.refresh[1];
-      console.log("req.session.refresh after:>> ", req.session.refresh);
-      console.log("req.session.cookie before :>> ", req.session.cookie);
       req.session.cookie.maxAge = COOKIE_JWT_REFRESH_TIME;
-      console.log("req.session.cookie after :>> ", req.session.cookie);
 
       req.session.userId = user._id;
       console.log("Refreshing session cookies");

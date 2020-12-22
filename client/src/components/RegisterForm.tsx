@@ -76,8 +76,9 @@ const RegisterForm: FC = () => {
         e.preventDefault();
         console.log("register");
         const test = await register();
-        console.log("test", test);
-      }}>
+        // console.log("test", test);
+      }}
+    >
       {/*{!loading && { localLoading }}*/}
       <label htmlFor="username">Username</label>
       <input

@@ -1,7 +1,7 @@
-type Tokens {
-  accessToken: String
-  refreshToken: String
-}
+# type Tokens {
+#   accessToken: String
+#   refreshToken: String
+# }
 
 type User {
   _id: ID!

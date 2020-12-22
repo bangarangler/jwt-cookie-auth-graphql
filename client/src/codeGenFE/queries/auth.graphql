@@ -1,0 +1,8 @@
+query GetToken {
+  getToken {
+    accessToken
+    error {
+      message
+    }
+  }
+}

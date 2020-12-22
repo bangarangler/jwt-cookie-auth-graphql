@@ -41,14 +41,14 @@ export const userResolvers: Resolvers = {
     // me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
     me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
       const accessToken = req.headers["bearer"];
-      if (req?.session?.userId) {
-        const sessionUser = req.session.userId;
-        console.log("sessionUser", sessionUser);
-      }
-      if (req?.session?.refresh) {
-        const refreshToken = req.session.refresh;
-        console.log("refreshToken", refreshToken);
-      }
+      // if (req?.session?.userId) {
+      // const sessionUser = req.session.userId;
+      // console.log("sessionUser", sessionUser);
+      // }
+      // if (req?.session?.refresh) {
+      // const refreshToken = req.session.refresh;
+      // console.log("refreshToken", refreshToken);
+      // }
       if (!accessToken) return null;
       const validateAccessToken = (token: string): null | any => {
         try {
@@ -65,7 +65,7 @@ export const userResolvers: Resolvers = {
         .db("jwtCookie")
         .collection("users")
         .findOne({ _id: new ObjectID(validUser.userId) });
-      console.log("user HERE", user);
+      // console.log("user HERE", user);
       pubsub.publish(SOMETHING_CHANGED, {
         somethingChanged: "Hey here is the me response",
       });
