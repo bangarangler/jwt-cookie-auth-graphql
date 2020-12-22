@@ -1,0 +1,8 @@
+query Me {
+  me {
+    _id
+    username
+    tokenVersion
+    email
+  }
+}
