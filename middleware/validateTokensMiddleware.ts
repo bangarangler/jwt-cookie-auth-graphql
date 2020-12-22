@@ -88,6 +88,7 @@ export const validateTokensMiddleware = async (
       req.session.cookie.maxAge = COOKIE_JWT_REFRESH_TIME;
       console.log("req.session.cookie after :>> ", req.session.cookie);
 
+      req.session.userId = user._id;
       console.log("Refreshing session cookies");
       return next();
     }

@@ -15,14 +15,13 @@ const App: FC = () => {
       <nav>
         <Link to="/login">Login</Link>
         <Link to="/register">Register</Link>
-        {/*<Link to="/">Home</Link>*/}
+        <Link to="/">Home</Link>
       </nav>
       {/* <Switch> */}
       <Route exact path="/login" component={LoginForm} />
       <Route exact path="/register" component={RegisterForm} />
-      {/*<Route exact path="/" component={Home} />*/}
+      <Route exact path="/" component={Home} />
       {/* </Switch> */}
-      <Home />
     </div>
   );
 };

@@ -22,37 +22,56 @@ const authMiddleware = new ApolloLink((operation, forward) => {
     headers: {
       ...headers,
       bearer: bearer, // add in auth from bearer
-      // authorization: localStorage.getItem('token') || null,
     },
   }));
 
   console.log({ operation });
-  //   return forward(operation);
   return forward(operation).map((res) => {
-    // console.log({ res });
-    // console.log("headers???", operation.getContext().headers);
-    if (operation.getContext().headers.bearer) {
-      console.log(
-        "operation.getContext()",
-        operation.getContext().headers.bearer
-      );
-      bearer = operation.getContext().headers.bearer;
-      console.log("bearer from getContext", bearer);
-    }
-    if (res?.data?.register?.accessToken) {
+    console.log(
+      "res.data.register.accessToken",
+      res?.data?.register?.accessToken
+    );
+    if (
+      res?.data?.register?.accessToken &&
+      res.data.register.accessToken !== ""
+    ) {
+      console.log("if check have data.register.accessToken");
       bearer = res?.data?.register?.accessToken;
       console.log("bearer off register", bearer);
     }
-    if (res?.data?.login?.accessToken) {
+    console.log("res.data.login.accessToken", res?.data?.login?.accessToken);
+    if (res?.data?.login?.accessToken && res.data.login.accessToken !== "") {
+      console.log("if check have data.login.accessToken");
       bearer = res.data.login.accessToken;
       console.log("bearer off login", bearer);
     }
     console.log("res", res);
-    // if (res?.headers?.bearer) {
-    //   bearer = res?.headers?.bearer;
-    // }
-    // console.log("res", res);
     return res;
+  });
+});
+
+const laterMiddleWare = new ApolloLink((operation, forward) => {
+  console.log("running later Middleware");
+  operation.setContext(({ headers = {} }) => ({
+    headers: {
+      ...headers,
+      bearer: bearer, // add in auth from bearer
+    },
+  }));
+
+  return forward(operation).map((response) => {
+    console.log("running getContext");
+    const context = operation.getContext();
+    const {
+      response: { headers },
+    } = context;
+    console.log("headers", headers);
+    if (headers && headers.get("bearer") !== "") {
+      bearer = headers.get("bearer");
+      console.log("bearer from getContext", bearer);
+      console.log("headers.get('bearer')", headers.get("bearer"));
+    }
+    return response;
   });
 });
 
@@ -61,42 +80,12 @@ const httpLink = new HttpLink({
   credentials: "include",
 });
 
-// OLD hard way with cookies does work
-// const httpLink = createHttpLink({
-//   uri: "http://localhost:4000/graphql",
-//   fetch: async (uri, options) => {
-//     const initReq = await fetch(uri, options);
-//     const { headers } = initReq;
-//     const accessToken = headers.get("x-access-token");
-//     const refreshToken = headers.get("x-refresh-token");
-//     if (accessToken && refreshToken) {
-//       saveTokens({
-//         accessToken,
-//         refreshToken,
-//       });
-//     }
-//     console.log({ initReq });
-//     return initReq;
-//   },
-// });
-
-// const authLink = setContext(async (_, { headers }) => {
-//   const tokens = getTokens();
-//   console.log({ tokens });
-//   if (tokens && tokens.accessToken) {
-//     return {
-//       headers: {
-//         "x-access-token": tokens.accessToken,
-//         "x-refresh-token": tokens.refreshToken,
-//       },
-//     };
-//   }
-// });
-
 const client = new ApolloClient({
   // not needed if doing with cookies
   // link: authLink.concat(httpLink),
-  link: authMiddleware.concat(httpLink),
+  // link: authMiddleware.concat(httpLink),
+  // link: from([authMiddleware, laterMiddleWare, httpLink]),
+  link: authMiddleware.concat(laterMiddleWare).concat(httpLink),
   // uri: "http://localhost:4000/graphql",
   cache: new InMemoryCache(),
   credentials: "include",

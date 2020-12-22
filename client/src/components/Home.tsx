@@ -6,7 +6,7 @@ import { deleteUser } from "../utilsFE/tempToken";
 const Home: FC = () => {
   const [logout] = useLogoutMutation();
   const apollo = useApolloClient();
-  const { data, loading, error } = useMeQuery({});
+  const { data, loading, error } = useMeQuery();
 
   useEffect(() => {
     console.log("data", data);
