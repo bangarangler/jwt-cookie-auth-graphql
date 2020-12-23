@@ -40,36 +40,24 @@ export const userResolvers: Resolvers = {
     },
     // me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
     me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
-      const accessToken = req.headers["bearer"];
-      // if (req?.session?.userId) {
-      // const sessionUser = req.session.userId;
-      // console.log("sessionUser", sessionUser);
-      // }
-      // if (req?.session?.refresh) {
-      // const refreshToken = req.session.refresh;
-      // console.log("refreshToken", refreshToken);
-      // }
-      if (!accessToken) return null;
-      const validateAccessToken = (token: string): null | any => {
-        try {
-          return verify(token, process.env.ACCESS_TOKEN!);
-        } catch (err) {
-          console.log("err", err);
+      try {
+        if (req?.session?.userId) {
+          const sessionUser = req.session.userId;
+          console.log("sessionUser", sessionUser);
+          const user = await db
+            .db("jwtCookie")
+            .collection("users")
+            .findOne({ _id: new ObjectID(sessionUser) });
+          pubsub.publish(SOMETHING_CHANGED, {
+            somethingChanged: "Hey here is the me response",
+          });
+          return user;
+        } else {
           return null;
         }
-      };
-      const validUser = validateAccessToken(accessToken);
-      if (!validUser) return null;
-      // console.log({ validUser });
-      const user = await db
-        .db("jwtCookie")
-        .collection("users")
-        .findOne({ _id: new ObjectID(validUser.userId) });
-      // console.log("user HERE", user);
-      pubsub.publish(SOMETHING_CHANGED, {
-        somethingChanged: "Hey here is the me response",
-      });
-      return user;
+      } catch (err) {
+        return null;
+      }
     },
   },
   Mutation: {

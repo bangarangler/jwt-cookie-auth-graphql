@@ -62,6 +62,9 @@ const LoginForm: FC = () => {
         },
       });
     },
+    onError: (err) => {
+      console.log("err", err);
+    },
   });
 
   if (error) {
@@ -82,8 +85,7 @@ const LoginForm: FC = () => {
       onSubmit={() => {
         console.log("Login");
         login();
-      }}
-    >
+      }}>
       <label htmlFor="username">Username</label>
       <input
         type="text"

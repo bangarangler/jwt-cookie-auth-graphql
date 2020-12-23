@@ -17,10 +17,12 @@ const Home: FC = () => {
   }, [data]);
 
   if (loading) {
+    console.log("loading...");
     return <div>loading...</div>;
   }
 
   if (error) {
+    console.log("err", error);
     return <div>Error {error}</div>;
   }
 

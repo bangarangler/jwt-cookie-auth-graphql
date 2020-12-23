@@ -12,11 +12,13 @@ import { onError } from "@apollo/client/link/error";
 import "./index.css";
 import App from "./App";
 import axios from "axios";
+// import { useMeLazyQuery } from "./codeGenFE";
 
 let token: any = "";
 
 const withToken = setContext(async () => {
   // if we have it cached return it
+  console.log("token from imaginary context", token);
   if (token) return { token };
 
   const fetchTokenRes = async () => {
@@ -41,7 +43,7 @@ const withToken = setContext(async () => {
   try {
     const tokenFromBE = await fetchTokenRes();
     console.log("tokenFromBE", tokenFromBE);
-    if (tokenFromBE?.headers?.bearer) {
+    if (tokenFromBE?.data?.data?.getToken?.accessToken) {
       token = tokenFromBE.data.data.getToken.accessToken;
       console.log("token", token);
     }
@@ -60,6 +62,12 @@ const resetToken = onError(({ networkError }) => {
     token = null;
   }
 });
+
+// if (token) {
+//   const [me] = useMeLazyQuery();
+//   const yo = me();
+//   console.log("yo", yo);
+// }
 
 const authFlowLink = withToken.concat(resetToken);
 
