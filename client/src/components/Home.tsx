@@ -34,8 +34,7 @@ const Home: FC = () => {
           // deleteUser();
           apollo.cache.evict({ fieldName: "User" });
           apollo.cache.gc();
-        }}
-      >
+        }}>
         Logout
       </button>
     </div>
