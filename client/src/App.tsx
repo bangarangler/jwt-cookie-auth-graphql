@@ -12,6 +12,14 @@ import PrivateRoute from "./components/PrivateRoute";
 const App: FC = () => {
   const { data, loading, error } = useMeQuery();
 
+  useEffect(() => {
+    // option 1 (option 2 is in index.tsx)
+    // TODO: if network error === 401, push to login and empty cache
+    // this will check for logging in and not having a good token or refresh
+    // watch out for this pushing people to login page over and over again
+    console.log("error?.networkError :>> ", error?.networkError);
+  }, [data, loading, error]);
+
   return (
     <div className="App">
       <p>app start</p>

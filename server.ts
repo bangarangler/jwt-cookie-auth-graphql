@@ -30,6 +30,7 @@ import {
   validateAccessToken,
   // validateRefreshToken,
 } from "./auth/validateTokens";
+import { s2mConverter } from "./utils/timeConverter";
 
 const { MongoClient } = mongodb;
 
@@ -71,11 +72,7 @@ const main = async () => {
         name: COOKIE_NAME,
         store: new RedisStore({ client: redis, disableTouch: true }),
         cookie: {
-          // maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
-          // maxAge: 90000, // 30 sec
-          // maxAge: 5000,
-          // maxAge: 5000,
-          maxAge: COOKIE_JWT_REFRESH_TIME,
+          maxAge: s2mConverter(COOKIE_JWT_REFRESH_TIME), // !seconds to milliseconds conversion don't change
           httpOnly: __prod__,
           sameSite: "lax",
           secure: __prod__, // cookie only works in https
@@ -89,7 +86,7 @@ const main = async () => {
     app.use(cookieParser());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
-    app.use((req, res, next) => validateTokensMiddleware(req, res, next, db));
+    app.use((req, _, next) => validateTokensMiddleware(req, _, next));
 
     const server = new ApolloServer({
       typeDefs,

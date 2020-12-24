@@ -8,10 +8,7 @@ mutation Login($input: UserLoginInput!) {
       message
     }
     user {
-      _id
-      username
-      tokenVersion
-      email
+      ...UserFrag
     }
     accessToken
   }

@@ -38,9 +38,14 @@ type RegisterResponse {
   # tokens: Tokens
 }
 
+type MeResponse {
+  error: GeneralError
+  user: User
+}
+
 type Query {
   loggedInUser: User
-  me: User
+  me: MeResponse!
 }
 
 input ChangePasswordInput {

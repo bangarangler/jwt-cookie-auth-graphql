@@ -37,11 +37,12 @@ const User: FC = () => {
 
   if (error) {
     console.log("error", error);
+    return <p>"Sorry there was an error"</p>;
   }
 
-  if (!loading && !data?.me?.username) return null;
+  if (!loading && !data?.me?.user?.username) return null;
 
-  return <div>User: {data?.me?.username}</div>;
+  return <div>User: {data?.me?.user?.username}</div>;
 };
 
 export default User;

@@ -34,7 +34,7 @@ export type Query = {
   getToken: TokenResponse;
   post: CreatePostRes;
   loggedInUser?: Maybe<User>;
-  me?: Maybe<User>;
+  me: MeResponse;
 };
 
 
@@ -173,6 +173,12 @@ export type RegisterResponse = {
   accessToken?: Maybe<Scalars['String']>;
 };
 
+export type MeResponse = {
+  __typename?: 'MeResponse';
+  error?: Maybe<GeneralError>;
+  user?: Maybe<User>;
+};
+
 export type ChangePasswordInput = {
   password: Scalars['String'];
   confirmPassword: Scalars['String'];
@@ -282,6 +288,7 @@ export type ResolversTypes = {
   UserRegisterInput: UserRegisterInput;
   LoginResponse: ResolverTypeWrapper<LoginResponse>;
   RegisterResponse: ResolverTypeWrapper<RegisterResponse>;
+  MeResponse: ResolverTypeWrapper<MeResponse>;
   ChangePasswordInput: ChangePasswordInput;
   AdditionalEntityFields: AdditionalEntityFields;
 };
@@ -308,6 +315,7 @@ export type ResolversParentTypes = {
   UserRegisterInput: UserRegisterInput;
   LoginResponse: LoginResponse;
   RegisterResponse: RegisterResponse;
+  MeResponse: MeResponse;
   ChangePasswordInput: ChangePasswordInput;
   AdditionalEntityFields: AdditionalEntityFields;
 };
@@ -357,7 +365,7 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
   getToken?: Resolver<ResolversTypes['TokenResponse'], ParentType, ContextType>;
   post?: Resolver<ResolversTypes['CreatePostRes'], ParentType, ContextType, RequireFields<QueryPostArgs, 'id'>>;
   loggedInUser?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
-  me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
+  me?: Resolver<ResolversTypes['MeResponse'], ParentType, ContextType>;
 };
 
 export type GeneralErrorResolvers<ContextType = any, ParentType extends ResolversParentTypes['GeneralError'] = ResolversParentTypes['GeneralError']> = {
@@ -431,6 +439,12 @@ export type RegisterResponseResolvers<ContextType = any, ParentType extends Reso
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type MeResponseResolvers<ContextType = any, ParentType extends ResolversParentTypes['MeResponse'] = ResolversParentTypes['MeResponse']> = {
+  error?: Resolver<Maybe<ResolversTypes['GeneralError']>, ParentType, ContextType>;
+  user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type Resolvers<ContextType = any> = {
   TokenResponse?: TokenResponseResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
@@ -444,6 +458,7 @@ export type Resolvers<ContextType = any> = {
   User?: UserResolvers<ContextType>;
   LoginResponse?: LoginResponseResolvers<ContextType>;
   RegisterResponse?: RegisterResponseResolvers<ContextType>;
+  MeResponse?: MeResponseResolvers<ContextType>;
 };
 
 

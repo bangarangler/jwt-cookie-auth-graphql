@@ -1,0 +1,6 @@
+fragment UserFrag on User {
+  _id
+  username
+  email
+  tokenVersion
+}

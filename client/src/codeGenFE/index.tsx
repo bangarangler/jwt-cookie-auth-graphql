@@ -25,7 +25,7 @@ export type Query = {
   getToken: TokenResponse;
   post: CreatePostRes;
   loggedInUser?: Maybe<User>;
-  me?: Maybe<User>;
+  me: MeResponse;
 };
 
 
@@ -164,11 +164,22 @@ export type RegisterResponse = {
   accessToken?: Maybe<Scalars['String']>;
 };
 
+export type MeResponse = {
+  __typename?: 'MeResponse';
+  error?: Maybe<GeneralError>;
+  user?: Maybe<User>;
+};
+
 export type ChangePasswordInput = {
   password: Scalars['String'];
   confirmPassword: Scalars['String'];
   accessToken: Scalars['String'];
 };
+
+export type UserFragFragment = (
+  { __typename?: 'User' }
+  & Pick<User, '_id' | 'username' | 'email' | 'tokenVersion'>
+);
 
 export type LoginMutationVariables = Exact<{
   input: UserLoginInput;
@@ -188,7 +199,7 @@ export type LoginMutation = (
       & Pick<InputError, 'source' | 'message'>
     )>>>, user?: Maybe<(
       { __typename?: 'User' }
-      & Pick<User, '_id' | 'username' | 'tokenVersion' | 'email'>
+      & UserFragFragment
     )> }
   ) }
 );
@@ -219,7 +230,7 @@ export type RegisterMutation = (
       & Pick<InputError, 'source' | 'message'>
     )>>>, user?: Maybe<(
       { __typename?: 'User' }
-      & Pick<User, '_id' | 'username' | 'tokenVersion' | 'email'>
+      & UserFragFragment
     )> }
   ) }
 );
@@ -244,13 +255,26 @@ export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MeQuery = (
   { __typename?: 'Query' }
-  & { me?: Maybe<(
-    { __typename?: 'User' }
-    & Pick<User, '_id' | 'username' | 'tokenVersion' | 'email'>
-  )> }
+  & { me: (
+    { __typename?: 'MeResponse' }
+    & { error?: Maybe<(
+      { __typename?: 'GeneralError' }
+      & Pick<GeneralError, 'message'>
+    )>, user?: Maybe<(
+      { __typename?: 'User' }
+      & UserFragFragment
+    )> }
+  ) }
 );
 
-
+export const UserFragFragmentDoc = gql`
+    fragment UserFrag on User {
+  _id
+  username
+  email
+  tokenVersion
+}
+    `;
 export const LoginDocument = gql`
     mutation Login($input: UserLoginInput!) {
   login(input: $input) {
@@ -262,15 +286,12 @@ export const LoginDocument = gql`
       message
     }
     user {
-      _id
-      username
-      tokenVersion
-      email
+      ...UserFrag
     }
     accessToken
   }
 }
-    `;
+    ${UserFragFragmentDoc}`;
 export type LoginMutationFn = Apollo.MutationFunction<LoginMutation, LoginMutationVariables>;
 
 /**
@@ -336,15 +357,12 @@ export const RegisterDocument = gql`
       message
     }
     user {
-      _id
-      username
-      tokenVersion
-      email
+      ...UserFrag
     }
     accessToken
   }
 }
-    `;
+    ${UserFragFragmentDoc}`;
 export type RegisterMutationFn = Apollo.MutationFunction<RegisterMutation, RegisterMutationVariables>;
 
 /**
@@ -408,13 +426,15 @@ export type GetTokenQueryResult = Apollo.QueryResult<GetTokenQuery, GetTokenQuer
 export const MeDocument = gql`
     query Me {
   me {
-    _id
-    username
-    tokenVersion
-    email
+    error {
+      message
+    }
+    user {
+      ...UserFrag
+    }
   }
 }
-    `;
+    ${UserFragFragmentDoc}`;
 
 /**
  * __useMeQuery__

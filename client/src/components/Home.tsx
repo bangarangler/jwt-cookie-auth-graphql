@@ -13,30 +13,35 @@ const Home: FC = () => {
   const { data, loading, error } = useMeQuery();
 
   useEffect(() => {
+    console.log("// ============= HOME ============= //");
     console.log("data", data);
-  }, [data]);
+    console.log("loading", loading);
+    console.log("error", error);
+    console.log("// ============= END HOME ============= //");
+  }, [data, loading, error]);
 
   if (loading) {
-    console.log("loading...");
+    // console.log("loading...");
     return <div>loading...</div>;
   }
 
   if (error) {
-    console.log("err", error);
-    return <div>Error {error}</div>;
+    // console.log("err", error);
+    return <div>Error </div>;
   }
 
   return (
     <div>
       HOME PAGE
-      <p>{data?.me?.username}</p>
+      <p>{data?.me?.user?.username}</p>
       <button
         onClick={async () => {
           await logout();
           // deleteUser();
           apollo.cache.evict({ fieldName: "User" });
           apollo.cache.gc();
-        }}>
+        }}
+      >
         Logout
       </button>
     </div>

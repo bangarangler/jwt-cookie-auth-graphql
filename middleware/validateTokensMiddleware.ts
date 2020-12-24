@@ -1,38 +1,27 @@
-import {
-  validateAccessToken,
-  validateRefreshToken,
-} from "../auth/validateTokens";
-import { ObjectID } from "mongodb";
-import { COOKIE_JWT_REFRESH_TIME, COOKIE_NAME } from "../constants";
-import { setTokenCookies, setTokens } from "../auth/authTokens"; // double check this as well
+import { validateAccessToken } from "../auth/validateTokens";
 // import { ApolloError } from "apollo-server-express";
 // import { COOKIE_NAME } from "../constants";
 
-export const validateTokensMiddleware = async (
-  req: any,
-  res: any,
-  next: any,
-  db?: any
-) => {
+export const validateTokensMiddleware = async (req: any, _: any, next: any) => {
   console.log(
     "======================================================================="
   );
+  // this is only here to make typescript happy
   console.log("middleware running...");
   // Try to Get JWT from Headers and refresh JWT from session
   // console.log("req.headers", req.headers);
   const accessToken = req?.headers["bearer"];
-  const refreshToken = req?.session?.refresh;
+  // const refreshToken = req?.session?.refresh;
   // console.log("accessToken", accessToken);
 
   console.log("accessToken :>> ", accessToken);
-  console.log("refreshToken :>> ", refreshToken);
+  // console.log("refreshToken :>> ", refreshToken);
 
-  if (!accessToken && !refreshToken) {
+  // if (!accessToken && !refreshToken) {
+  if (!accessToken) {
+    if (req?.session?.userId) delete req.session.userId;
     return next();
-  }
-
-  // if you have been here before...
-  if (accessToken) {
+  } else {
     // console.log("checking access token");
     // check if accessToken is still valid and if so give us the user.
     const decodedAccessToken = validateAccessToken(accessToken) as any;
@@ -45,49 +34,7 @@ export const validateTokensMiddleware = async (
       req.session.userId = decodedAccessToken.userId;
       return next();
     }
+    if (req?.session?.userId) delete req.session.userId;
+    next();
   }
-
-  // no accessToken so check refreshToken from coookie-session
-  console.log("refreshToken :>> ", refreshToken);
-  if (refreshToken) {
-    console.log("checking refresh token");
-    const decodedRefreshToken = validateRefreshToken(refreshToken);
-    // if it's valid and there is a user
-    if (decodedRefreshToken && decodedRefreshToken.user) {
-      // console.log("refresh token exists");
-      // fetch the user from db
-      const user = await db
-        .db("jwtCookie")
-        .collection("users")
-        .findOne({ _id: new ObjectID(decodedRefreshToken.user.userId) });
-
-      // if no user or tokenVersion don't match decodedRefreshToken clearCookie
-      // and destroy session (it's bad request or tampered with the token)
-      if (
-        !user ||
-        user.tokenVersion !== decodedRefreshToken.user.tokenVersion
-      ) {
-        // console.log("destroying session and clearing cookies");
-        res.clearCookie(COOKIE_NAME);
-        req.session.destroy();
-        // consider 401 here
-        return next();
-      }
-      // make new refresh and access from the user from db
-      const userTokens = setTokens(user);
-      res.set({
-        "Access-Control-Expose-Headers": "bearer",
-        bearer: userTokens.accessToken,
-      });
-      // make refresh token and set to session
-      const cookies = setTokenCookies(userTokens);
-      req.session.refresh = cookies.refresh[1];
-      req.session.cookie.maxAge = COOKIE_JWT_REFRESH_TIME;
-
-      req.session.userId = user._id;
-      console.log("Refreshing session cookies");
-      return next();
-    }
-  }
-  next();
 };

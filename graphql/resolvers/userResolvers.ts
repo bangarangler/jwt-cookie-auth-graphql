@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { verify, sign } from "jsonwebtoken";
 import {
   LoginResponse,
+  MeResponse,
   MutationResolvers,
   QueryResolvers,
   RegisterResponse,
@@ -39,8 +40,11 @@ export const userResolvers: Resolvers = {
       return foundUser;
     },
     // me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
-    me: async (_, __, { req, db, pubsub }): Promise<User | null> => {
+    me: async (_, __, { req, res, db, pubsub }): Promise<MeResponse> => {
       try {
+        console.log("req.session.userId :>> ", req.session.userId);
+        if (!req.session.userId) throw "UNAUTHORIZED";
+
         if (req?.session?.userId) {
           const sessionUser = req.session.userId;
           console.log("sessionUser", sessionUser);
@@ -51,17 +55,24 @@ export const userResolvers: Resolvers = {
           pubsub.publish(SOMETHING_CHANGED, {
             somethingChanged: "Hey here is the me response",
           });
-          return user;
+          return { user };
         } else {
-          return null;
+          return { error: { message: "not sure" } };
         }
       } catch (err) {
-        return null;
+        if (err === "UNAUTHORIZED")
+          return res.status(401).json({ message: "UNAUTHORIZED" });
+        return { error: { message: "not sure" } };
       }
     },
   },
   Mutation: {
-    login: async (_, { input }, { db, req }, ___): Promise<LoginResponse> => {
+    login: async (
+      _,
+      { input },
+      { db, req, res },
+      ___
+    ): Promise<LoginResponse> => {
       try {
         const { username, password } = input;
         const isValidLogin = loginValidation(username, password);
@@ -87,6 +98,11 @@ export const userResolvers: Resolvers = {
         req.session.refresh = cookies.refresh[1];
         // console.log("user from login", user);
         req.session.userId = user._id;
+
+        res.set({
+          "Access-Control-Expose-Headers": "bearer",
+          bearer: accessToken,
+        });
 
         // return token
         // console.log("user res", user);

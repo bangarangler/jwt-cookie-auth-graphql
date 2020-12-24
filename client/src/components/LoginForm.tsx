@@ -1,4 +1,5 @@
 import React, { FC, useReducer } from "react";
+import { useHistory } from "react-router-dom";
 import {
   useLoginMutation,
   MeDocument,
@@ -37,6 +38,7 @@ const LoginForm: FC = () => {
   // Local state
   const [state, dispatch] = useReducer(reducer, initState);
   const { username, password } = state;
+  const history = useHistory();
 
   // apollo state
   const [login, { data, loading, error }] = useLoginMutation({
@@ -54,13 +56,16 @@ const LoginForm: FC = () => {
         query: MeDocument,
         data: {
           me: {
-            _id: user._id,
-            username: user.username,
-            email: user.email,
-            tokenVersion: user.tokenVersion,
+            user: {
+              _id: user._id,
+              username: user.username,
+              email: user.email,
+              tokenVersion: user.tokenVersion,
+            },
           },
         },
       });
+      history.push("/");
     },
     onError: (err) => {
       console.log("err", err);
@@ -85,7 +90,8 @@ const LoginForm: FC = () => {
       onSubmit={() => {
         console.log("Login");
         login();
-      }}>
+      }}
+    >
       <label htmlFor="username">Username</label>
       <input
         type="text"
