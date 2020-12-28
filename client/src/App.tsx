@@ -6,7 +6,7 @@ import Home from "./components/Home";
 import User from "./components/User";
 
 import "./App.css";
-import { useMeQuery } from "./codeGenFE";
+import { useMeLazyQuery, useMeQuery } from "./codeGenFE";
 import PrivateRoute from "./components/PrivateRoute";
 
 const App: FC = () => {
@@ -42,14 +42,13 @@ const App: FC = () => {
       {/* <Switch> */}
       <Route exact path="/login" component={LoginForm} />
       <Route exact path="/register" component={RegisterForm} />
-      {!error && (
-        <PrivateRoute
-          exact
-          path="/"
-          loggedIn={!!data?.me.user?._id}
-          component={Home}
-        />
-      )}
+      <PrivateRoute
+        exact
+        path="/"
+        // loggedIn={!!data?.me.user?._id}
+        loggedIn={!!data?.me.user?._id}
+        component={Home}
+      />
       {/* </Switch> */}
     </div>
   );

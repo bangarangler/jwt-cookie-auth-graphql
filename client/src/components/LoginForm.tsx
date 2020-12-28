@@ -1,4 +1,4 @@
-import React, { FC, useReducer } from "react";
+import React, { FC, useReducer, useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import {
   useLoginMutation,
@@ -6,6 +6,7 @@ import {
   MeQueryVariables,
   MeQuery,
   User,
+  useMeLazyQuery,
 } from "../codeGenFE";
 // import { saveTokens, saveUser } from "../utilsFE/tempToken";
 // import { saveUser } from "../utilsFE/tempToken";
@@ -37,6 +38,19 @@ const initState = {
 const LoginForm: FC = () => {
   // Local state
   const [state, dispatch] = useReducer(reducer, initState);
+  const [getme, { data: meData }] = useMeLazyQuery();
+
+  useEffect(() => {
+    if (meData?.me.user?._id) {
+      const initPath: string | null = window.localStorage.getItem("initURL");
+      if (initPath && initPath !== "/login" && initPath !== "/register") {
+        history.push(initPath);
+      } else {
+        history.push("/");
+      }
+    }
+  }, [meData]);
+
   const { username, password } = state;
   const history = useHistory();
 
@@ -73,12 +87,7 @@ const LoginForm: FC = () => {
     },
     onCompleted: () => {
       console.log("THING 2");
-      const initPath: string | null = window.localStorage.getItem("initURL");
-      if (initPath && initPath !== "/login" && initPath !== "/register") {
-        history.push(initPath);
-      } else {
-        history.push("/");
-      }
+      getme();
     },
     onError: (err) => {
       console.log("err", err);
