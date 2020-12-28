@@ -15,11 +15,13 @@ import "./index.css";
 import App from "./App";
 import axios from "axios";
 import { buildOperationNodeForField } from "graphql-tools";
+import { toEditorSettings } from "typescript";
 // import { useMeLazyQuery } from "./codeGenFE";
 
 let token: any = "";
 
 async function fetchToken() {
+  console.log("step: fetch tokens running");
   const res = await axios({
     url: "http://localhost:4000/graphql",
     method: "post",
@@ -33,7 +35,7 @@ async function fetchToken() {
           }
         }
       }
-    `,
+      `,
     },
     withCredentials: true,
   });
@@ -42,46 +44,50 @@ async function fetchToken() {
 
 // This sets the headers for every request to the server
 const snagNewTokens = new ApolloLink((operation, forward) => {
-  operation.setContext(({ headers = {} }) => ({
-    headers: {
-      ...headers,
-      bearer: token,
-    },
-  }));
-
-  return forward(operation).map((response: any) => {
-    const context = operation.getContext();
-    const {
-      response: { headers },
-    } = context;
-    // if fresh access token is sent, set it to the header
-    if (headers && headers?.get("bearer")?.length > 0) {
-      token = headers.get("bearer");
-      // console.log("token :>> ", token);
-    }
-    return response;
-  });
+  console.log("step: snag new token running");
+  if (token) {
+    operation.setContext(({ headers = {} }) => ({
+      headers: {
+        ...headers,
+        bearer: token,
+      },
+    }));
+    console.log("token", token);
+  }
+  return forward(operation).map((res) => res);
+  // return forward(operation).map((response: any) => {
+  //   const context = operation.getContext();
+  //   const {
+  //     response: { headers },
+  //   } = context;
+  //   // if fresh access token is sent, set it to the header
+  //   if (headers && headers?.get("bearer")?.length > 0) {
+  //     token = headers.get("bearer");
+  //     console.log("token", token);
+  //     // console.log("token :>> ", token);
+  //   }
+  //   return response;
+  // });
 });
 // })
 
 // const resetToken = onError(({ networkError }) => {
 const resetToken = onError(
   ({ networkError, response, operation, forward }: ErrorResponse) => {
+    console.log("step: reset token running");
     // console.log("Error Middleware hit");
-    if (networkError && "statusCode" in networkError)
-      if (
-        networkError &&
-        "statusCode" in networkError &&
-        networkError.statusCode === 401
-      ) {
-        // console.log("networkError?.statusCode :>> ", networkError?.statusCode);
-
-        // if we get a 401, assume the access token is bad and try to fetch a fresh one
-        fetchToken().then((tokenRes) => {
-          // console.log("tokenRes", tokenRes);
-          if (tokenRes?.data?.data?.getToken?.accessToken) {
-            // set token to header
-            token = tokenRes.data.data.getToken.accessToken;
+    if (
+      networkError &&
+      "statusCode" in networkError &&
+      networkError.statusCode === 401
+    ) {
+      // if we get a 401, assume the access token is bad and try to fetch a fresh one
+      fetchToken().then((tokenRes) => {
+        console.log("tokenRes :>> ", tokenRes);
+        if (tokenRes?.data?.data?.getToken?.accessToken) {
+          // set token to header
+          token = tokenRes.data.data.getToken.accessToken;
+          if (token) {
             operation.setContext(({ headers = {} }) => ({
               headers: {
                 ...headers,
@@ -89,39 +95,34 @@ const resetToken = onError(
               },
             }));
             console.log("token", token);
-            // try the previous call again
-            console.log("RETRYING I THINK...");
-            forward(operation);
-          } else {
-            // option 2 (option 1 is in app.tsx)
-            token = null;
+            return forward(operation);
           }
-        });
-      }
+        }
+      });
+    }
   }
 );
 
 // retry when we get a 401 after we set a new access token to the header (above)
 const retryRequest = new RetryLink({
-  attempts: (count, operation, error) => {
-    operation.setContext(({ headers = {} }) => ({
-      headers: {
-        ...headers,
-        bearer: token,
-      },
-    }));
+  attempts: async (count, operation, error) => {
     if (error?.statusCode === 401 && count < 2) {
       return true;
     }
     return false;
-    // return !!error && operation.operationName != "specialCase";
   },
   delay: (count, operation, error) => {
     return count * 1000 * Math.random();
   },
 });
 
-const authFlowLink = retryRequest.concat(resetToken).concat(snagNewTokens);
+// concat order 1 => 3 => 2
+// const authFlowLink = retryRequest.concat(snagNewTokens).concat(resetToken);
+// const authFlowLink = retryRequest.concat(resetToken).concat(snagNewTokens);
+const authFlowLink = snagNewTokens.concat(retryRequest).concat(resetToken);
+// const authFlowLink = snagNewTokens.concat(resetToken).concat(retryRequest);
+// const authFlowLink = resetToken.concat(snagNewTokens).concat(retryRequest);
+// const authFlowLink = resetToken.concat(retryRequest).concat(snagNewTokens);
 
 const httpLink = new HttpLink({
   uri: "http://localhost:4000/graphql",

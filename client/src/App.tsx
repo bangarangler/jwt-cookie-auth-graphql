@@ -13,16 +13,10 @@ const App: FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.log("location :>> ", location);
     const path = location.pathname;
     window.localStorage.setItem("initURL", path);
     const test = window.localStorage.getItem("initURL");
-    console.log("test :>> ", test);
   }, []);
-
-  useEffect(() => {
-    console.log("location :>> ", location.pathname);
-  });
 
   const { data, loading, error } = useMeQuery();
 

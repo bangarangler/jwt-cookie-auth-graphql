@@ -7,6 +7,7 @@ import {
   MeQuery,
   User,
   useMeLazyQuery,
+  useMeQuery,
 } from "../codeGenFE";
 // import { saveTokens, saveUser } from "../utilsFE/tempToken";
 // import { saveUser } from "../utilsFE/tempToken";
@@ -38,7 +39,8 @@ const initState = {
 const LoginForm: FC = () => {
   // Local state
   const [state, dispatch] = useReducer(reducer, initState);
-  const [getme, { data: meData }] = useMeLazyQuery();
+  const { data: meData } = useMeQuery();
+  const [runLazyMeQuery, { data: alsoMeData }] = useMeLazyQuery();
 
   useEffect(() => {
     if (meData?.me.user?._id) {
@@ -49,7 +51,7 @@ const LoginForm: FC = () => {
         history.push("/");
       }
     }
-  }, [meData]);
+  }, [meData, alsoMeData]);
 
   const { username, password } = state;
   const history = useHistory();
@@ -82,12 +84,10 @@ const LoginForm: FC = () => {
             },
           },
         });
-        console.log("THING 1");
       }
     },
     onCompleted: () => {
-      console.log("THING 2");
-      getme();
+      runLazyMeQuery();
     },
     onError: (err) => {
       console.log("err", err);
@@ -101,10 +101,6 @@ const LoginForm: FC = () => {
 
   if (loading) {
     return <div>loading...</div>;
-  }
-
-  if (data) {
-    console.log("data", data);
   }
 
   return (
