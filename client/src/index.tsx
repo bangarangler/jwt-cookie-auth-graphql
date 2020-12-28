@@ -82,21 +82,19 @@ const resetToken = onError(
           if (tokenRes?.data?.data?.getToken?.accessToken) {
             // set token to header
             token = tokenRes.data.data.getToken.accessToken;
-            // operation.setContext(({ headers = {} }) => ({
-            //   headers: {
-            //     ...headers,
-            //     bearer: token,
-            //   },
-            // }));
-            // console.log("token", token);
+            operation.setContext(({ headers = {} }) => ({
+              headers: {
+                ...headers,
+                bearer: token,
+              },
+            }));
+            console.log("token", token);
             // try the previous call again
-            // console.log("RETRYING I THINK...");
+            console.log("RETRYING I THINK...");
             forward(operation);
           } else {
             // option 2 (option 1 is in app.tsx)
-            // TODO: perform logout stuff and push to /login using the cache and window.location.href
             token = null;
-            // console.log("token :>> ", token);
           }
         });
       }

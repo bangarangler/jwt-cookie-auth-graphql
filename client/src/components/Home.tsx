@@ -1,5 +1,6 @@
 import { useApolloClient } from "@apollo/client";
 import React, { FC, useEffect } from "react";
+import { useHistory } from "react-router-dom";
 import { useLogoutMutation, useMeQuery } from "../codeGenFE";
 // import { deleteUser } from "../utilsFE/tempToken";
 
@@ -8,17 +9,13 @@ interface Props {
 }
 
 const Home: FC = () => {
-  const [logout] = useLogoutMutation();
+  const [logout, { client }] = useLogoutMutation({
+    update: (cache, { data }) => {
+      client.clearStore();
+    },
+  });
   const apollo = useApolloClient();
   const { data, loading, error } = useMeQuery();
-
-  useEffect(() => {
-    console.log("// ============= HOME ============= //");
-    console.log("data", data);
-    console.log("loading", loading);
-    console.log("error", error);
-    console.log("// ============= END HOME ============= //");
-  }, [data, loading, error]);
 
   if (loading) {
     // console.log("loading...");
@@ -37,9 +34,6 @@ const Home: FC = () => {
       <button
         onClick={async () => {
           await logout();
-          // deleteUser();
-          apollo.cache.evict({ fieldName: "User" });
-          apollo.cache.gc();
         }}
       >
         Logout

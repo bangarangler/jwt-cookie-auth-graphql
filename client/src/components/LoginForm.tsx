@@ -48,24 +48,37 @@ const LoginForm: FC = () => {
         password,
       },
     },
-    update: (cache, { data }) => {
-      const user: any = cache.readQuery<MeQuery, MeQueryVariables>({
-        query: MeDocument,
-      });
-      cache.writeQuery<MeQuery, MeQueryVariables>({
-        query: MeDocument,
-        data: {
-          me: {
-            user: {
-              _id: user._id,
-              username: user.username,
-              email: user.email,
-              tokenVersion: user.tokenVersion,
+    update: async (cache, { data }) => {
+      // const user: any = cache.readQuery<MeQuery, MeQueryVariables>({
+      //   query: MeDocument,
+      // });
+      // console.log("data :>> ", data);
+      if (data?.login.user) {
+        const user = data?.login.user;
+        cache.writeQuery<MeQuery, MeQueryVariables>({
+          query: MeDocument,
+          data: {
+            me: {
+              user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                tokenVersion: user.tokenVersion,
+              },
             },
           },
-        },
-      });
-      history.push("/");
+        });
+        console.log("THING 1");
+      }
+    },
+    onCompleted: () => {
+      console.log("THING 2");
+      const initPath: string | null = window.localStorage.getItem("initURL");
+      if (initPath && initPath !== "/login" && initPath !== "/register") {
+        history.push(initPath);
+      } else {
+        history.push("/");
+      }
     },
     onError: (err) => {
       console.log("err", err);

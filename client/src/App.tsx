@@ -1,5 +1,5 @@
 import React, { FC, useEffect } from "react";
-import { Route, Link, useHistory } from "react-router-dom";
+import { Route, Link, useHistory, useLocation } from "react-router-dom";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import Home from "./components/Home";
@@ -10,15 +10,25 @@ import { useMeQuery } from "./codeGenFE";
 import PrivateRoute from "./components/PrivateRoute";
 
 const App: FC = () => {
-  const { data, loading, error } = useMeQuery();
+  const location = useLocation();
 
   useEffect(() => {
-    // option 1 (option 2 is in index.tsx)
-    // TODO: if network error === 401, push to login and empty cache
-    // this will check for logging in and not having a good token or refresh
-    // watch out for this pushing people to login page over and over again
-    console.log("error?.networkError :>> ", error?.networkError);
-  }, [data, loading, error]);
+    console.log("location :>> ", location);
+    const path = location.pathname;
+    window.localStorage.setItem("initURL", path);
+    const test = window.localStorage.getItem("initURL");
+    console.log("test :>> ", test);
+  }, []);
+
+  useEffect(() => {
+    console.log("location :>> ", location.pathname);
+  });
+
+  const { data, loading, error } = useMeQuery();
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <div className="App">
@@ -32,7 +42,14 @@ const App: FC = () => {
       {/* <Switch> */}
       <Route exact path="/login" component={LoginForm} />
       <Route exact path="/register" component={RegisterForm} />
-      <PrivateRoute exact path="/" loggedIn={true} component={Home} />
+      {!error && (
+        <PrivateRoute
+          exact
+          path="/"
+          loggedIn={!!data?.me.user?._id}
+          component={Home}
+        />
+      )}
       {/* </Switch> */}
     </div>
   );

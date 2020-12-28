@@ -1,4 +1,4 @@
-import React, { FC, ReactHTMLElement } from "react";
+import React, { FC, ReactHTMLElement, useEffect } from "react";
 import { Route, Redirect } from "react-router-dom";
 
 interface Component {
