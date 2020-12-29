@@ -6,9 +6,11 @@ interface Component {
   loggedIn: boolean;
   exact?: any;
   path: any;
+  resetMemToken: () => void;
 }
 
 const PrivateRoute: FC<Component> = ({
+  resetMemToken,
   component: Component,
   loggedIn,
   ...rest
@@ -17,7 +19,11 @@ const PrivateRoute: FC<Component> = ({
     <Route
       {...rest}
       render={(props) =>
-        loggedIn ? <Component {...props} /> : <Redirect to="/login" />
+        loggedIn ? (
+          <Component {...props} resetMemToken={resetMemToken} />
+        ) : (
+          <Redirect to="/login" />
+        )
       }
     />
   );

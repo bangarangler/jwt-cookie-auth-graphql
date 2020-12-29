@@ -4,13 +4,22 @@ import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import Home from "./components/Home";
 import User from "./components/User";
+import { useUserContext } from "./context/allContexts";
 
 import "./App.css";
 import { useMeLazyQuery, useMeQuery } from "./codeGenFE";
 import PrivateRoute from "./components/PrivateRoute";
 
-const App: FC = () => {
+interface AppProps {
+  resetMemToken: () => void;
+}
+
+const App: FC<AppProps> = ({ resetMemToken }) => {
   const location = useLocation();
+  const { userState } = useUserContext();
+  useEffect(() => {
+    console.log("userState", userState);
+  }, [userState]);
 
   useEffect(() => {
     const path = location.pathname;
@@ -42,6 +51,7 @@ const App: FC = () => {
         // loggedIn={!!data?.me.user?._id}
         loggedIn={!!data?.me.user?._id}
         component={Home}
+        resetMemToken={resetMemToken}
       />
       {/* </Switch> */}
     </div>

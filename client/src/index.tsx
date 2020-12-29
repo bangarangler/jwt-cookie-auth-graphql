@@ -1,6 +1,7 @@
 import React, { forwardRef } from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter as Router } from "react-router-dom";
+import { ContextProvider } from "./context/providerComposer";
 import {
   ApolloClient,
   ApolloLink,
@@ -20,6 +21,9 @@ import { toEditorSettings } from "typescript";
 
 let token: any = "";
 
+const resetMemToken = () => {
+  token = "";
+};
 async function fetchToken() {
   console.log("step: fetch tokens running");
   const res = await axios({
@@ -139,7 +143,9 @@ ReactDOM.render(
   <ApolloProvider client={client}>
     <React.StrictMode>
       <Router>
-        <App />
+        <ContextProvider>
+          <App resetMemToken={resetMemToken} />
+        </ContextProvider>
       </Router>
     </React.StrictMode>
   </ApolloProvider>,
