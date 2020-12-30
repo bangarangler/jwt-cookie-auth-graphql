@@ -11,4 +11,4 @@ export const COOKIE_NAME = "hank";
 export const COOKIE_JWT_REFRESH_TIME = 120; // in seconds
 
 // export const JWT_ACCESS_TOKEN_TIME = 1000 * 60 * 15; // 15 Minutes
-export const JWT_ACCESS_TOKEN_TIME = 60; // in seconds
+export const JWT_ACCESS_TOKEN_TIME = 10; // in seconds

@@ -1,48 +1,26 @@
-import { useApolloClient } from "@apollo/client";
-import React, { FC, useEffect } from "react";
+import React, { FC } from "react";
+import User from "./User";
 import { useHistory } from "react-router-dom";
-import { useLogoutMutation, useMeQuery } from "../codeGenFE";
+import { useLogoutMutation } from "../codeGenFE";
 import { useUserContext } from "../context/allContexts";
-// import { deleteUser } from "../utilsFE/tempToken";
 
-interface Props {
-  bearer: string | null | undefined;
-  resetMemToken: () => void;
-}
+interface Props {}
 
-const Home: FC<Props> = ({ resetMemToken }) => {
+const Home: FC<Props> = () => {
   const history = useHistory();
   const { userState, userDispatch } = useUserContext();
   const [logout, { client }] = useLogoutMutation({
     update: async (cache, { data }) => {
-      resetMemToken();
       userDispatch({ type: "logout" });
-      // write to store here make user null possible move token stuff? find
-      // better example
-      // await client.clearStore();
+      await client.clearStore();
       history.push("/login");
     },
   });
-  useEffect(() => {
-    console.log(userState);
-  }, [userState]);
-  const apollo = useApolloClient();
-  const { data, loading, error } = useMeQuery();
-
-  if (loading) {
-    // console.log("loading...");
-    return <div>loading...</div>;
-  }
-
-  if (error) {
-    // console.log("err", error);
-    return <div>Error </div>;
-  }
 
   return (
     <div>
       HOME PAGE
-      <p>{userState?.user?.username}</p>
+      {userState?.user && <p>User: {userState.user.username}</p>}
       <button
         onClick={async () => {
           await logout();

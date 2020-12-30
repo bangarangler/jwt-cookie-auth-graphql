@@ -1,14 +1,17 @@
 import React, { FC, useReducer, useEffect } from "react";
 import { useHistory } from "react-router-dom";
+// import { useImprovedLoginMutation } from "../improvedLoginMutation";
 import {
   useLoginMutation,
   MeDocument,
   MeQueryVariables,
   MeQuery,
-  User,
-  useMeLazyQuery,
-  useMeQuery,
+  // User,
+  // useMeLazyQuery,
+  // useMeQuery,
 } from "../codeGenFE";
+import { useAuthToken } from "../authToken";
+import { useUserContext } from "../context/allContexts";
 // import { saveTokens, saveUser } from "../utilsFE/tempToken";
 // import { saveUser } from "../utilsFE/tempToken";
 
@@ -37,26 +40,15 @@ const initState = {
 };
 
 const LoginForm: FC = () => {
+  const history = useHistory();
+  const { userDispatch } = useUserContext();
+  const [, setAuthToken] = useAuthToken();
   // Local state
   const [state, dispatch] = useReducer(reducer, initState);
-  const { data: meData } = useMeQuery();
-  const [runLazyMeQuery, { data: alsoMeData }] = useMeLazyQuery();
-
-  useEffect(() => {
-    if (meData?.me.user?._id) {
-      const initPath: string | null = window.localStorage.getItem("initURL");
-      if (initPath && initPath !== "/login" && initPath !== "/register") {
-        history.push(initPath);
-      } else {
-        history.push("/");
-      }
-    }
-  }, [meData, alsoMeData]);
 
   const { username, password } = state;
-  const history = useHistory();
+  // const [login] = useImprovedLoginMutation();
 
-  // apollo state
   const [login, { data, loading, error }] = useLoginMutation({
     variables: {
       input: {
@@ -65,12 +57,13 @@ const LoginForm: FC = () => {
       },
     },
     update: async (cache, { data }) => {
-      // const user: any = cache.readQuery<MeQuery, MeQueryVariables>({
-      //   query: MeDocument,
-      // });
-      // console.log("data :>> ", data);
+      console.log("update running...");
       if (data?.login.user) {
+        // console.log("data from update", data?.login?.accessToken);
+        setAuthToken(data?.login?.accessToken);
+        userDispatch({ type: "user", payload: data.login.user });
         const user = data?.login.user;
+        console.log("user", user);
         cache.writeQuery<MeQuery, MeQueryVariables>({
           query: MeDocument,
           data: {
@@ -86,13 +79,21 @@ const LoginForm: FC = () => {
         });
       }
     },
-    onCompleted: () => {
-      runLazyMeQuery();
+    onCompleted: (cache) => {
+      console.log("cache", cache);
+      // runLazyMeQuery();
+      // setAuthToken(data?.login?.accessToken);
     },
     onError: (err) => {
       console.log("err", err);
     },
   });
+
+  // useEffect(() => {
+  //   if (data?.login.user) {
+  //     setAuthToken(data.login.user);
+  //   }
+  // }, [data, loading, error]);
 
   if (error) {
     console.log("error", error);
@@ -105,11 +106,12 @@ const LoginForm: FC = () => {
 
   return (
     <form
-      onSubmit={() => {
-        console.log("Login");
+      onSubmit={(e) => {
+        e.preventDefault();
+        // login({ input: { username, password } });
         login();
-      }}
-    >
+        history.push("/");
+      }}>
       <label htmlFor="username">Username</label>
       <input
         type="text"
