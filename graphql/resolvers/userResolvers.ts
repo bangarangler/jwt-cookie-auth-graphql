@@ -18,6 +18,7 @@ import { loginValidation } from "../../utils/loginValidation";
 import { registerValidation } from "../../utils/registerValidation";
 import { COOKIE_NAME } from "../../constants";
 import { sendEmail } from "../../utils/sendEmail";
+import { s2mConverter } from "../../utils/timeConverter";
 
 interface Resolvers {
   Query: QueryResolvers;
@@ -43,7 +44,8 @@ export const userResolvers: Resolvers = {
     me: async (_, __, { req, res, db, pubsub }): Promise<MeResponse> => {
       try {
         console.log("req.session.userId :>> ", req.session.userId);
-        if (!req.session.userId) throw "UNAUTHORIZED";
+        // if (!req.session.userId) throw "UNAUTHORIZED";
+        if (!req.session.userId) return res.status(401);
 
         if (req?.session?.userId) {
           const sessionUser = req.session.userId;
@@ -189,6 +191,7 @@ export const userResolvers: Resolvers = {
       // req.session.forgotPassword = cookies.forgotPassword[1];
       console.log("tokenToEmail :>> ", tokenToEmail);
       req.session.forgotPassword = tokenToEmail;
+      req.session.cookie.maxAge = s2mConverter(60 * 60); // one hour
       req.session.userId = foundUser._id;
       const preset = `?token=${tokenToEmail}`;
       // return { user: user.ops[0], accessToken };
@@ -208,7 +211,7 @@ export const userResolvers: Resolvers = {
       //   console.log("deleteing hank");
       //   await res.clearCookie(COOKIE_NAME);
       // }
-
+      console.log("options :>> ", options);
       try {
         if (!accessToken || accessToken === "") {
           errors.push({
@@ -216,6 +219,12 @@ export const userResolvers: Resolvers = {
             message: "Bad Access Token",
           });
         }
+
+        console.log("process.env.ACCESS_TOKEN :>> ", process.env.ACCESS_TOKEN);
+        console.log(
+          "req.session.forgotPassword :>> ",
+          req.session.forgotPassword
+        );
         const validToken: any = verify(accessToken, process.env.ACCESS_TOKEN!);
         console.log("req.session :>> ", req.session);
         const validSessionToken = verify(

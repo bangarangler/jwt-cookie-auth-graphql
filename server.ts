@@ -105,7 +105,9 @@ const main = async () => {
         return { req, res, db, redis, pubsub };
       },
       subscriptions: {
-        onConnect: (cParams: any, __) => {
+        onConnect: (cParams: any, websocket) => {
+          console.log("cParams :>> ", cParams);
+          console.log("websocket :>> ", websocket);
           const accessToken = cParams.accessToken;
           const user = validateAccessToken(accessToken);
           if (!user) {
