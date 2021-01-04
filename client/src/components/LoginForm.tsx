@@ -39,19 +39,19 @@ const initState = {
 const LoginForm: FC = () => {
   // Local state
   const [state, dispatch] = useReducer(reducer, initState);
-  const { data: meData } = useMeQuery();
+  // const { data: meData } = useMeQuery();
   const [runLazyMeQuery, { data: alsoMeData }] = useMeLazyQuery();
 
-  useEffect(() => {
-    if (meData?.me.user?._id) {
-      const initPath: string | null = window.localStorage.getItem("initURL");
-      if (initPath && initPath !== "/login" && initPath !== "/register") {
-        history.push(initPath);
-      } else {
-        history.push("/");
-      }
-    }
-  }, [meData, alsoMeData]);
+  // useEffect(() => {
+  //   if (meData?.me.user?._id) {
+  //     const initPath: string | null = window.localStorage.getItem("initURL");
+  //     if (initPath && initPath !== "/login" && initPath !== "/register") {
+  //       history.push(initPath);
+  //     } else {
+  //       history.push("/");
+  //     }
+  //   }
+  // }, [meData, alsoMeData]);
 
   const { username, password } = state;
   const history = useHistory();
@@ -88,6 +88,7 @@ const LoginForm: FC = () => {
     },
     onCompleted: () => {
       runLazyMeQuery();
+      history.push("/app/");
     },
     onError: (err) => {
       console.log("err", err);
