@@ -12,7 +12,7 @@ import {
   // Tokens,
   User,
 } from "../../codeGenBE";
-import { setTokenCookies, setTokens } from "../../auth/authTokens";
+import { setTokens } from "../../auth/authTokens";
 // import { setTokens } from "../../auth/authTokens";
 import { loginValidation } from "../../utils/loginValidation";
 import { registerValidation } from "../../utils/registerValidation";
@@ -60,19 +60,16 @@ export const userResolvers: Resolvers = {
           return { error: { message: "not sure" } };
         }
       } catch (err) {
-        if (err === "UNAUTHORIZED")
-          return res.status(401).json({ message: "UNAUTHORIZED" });
-        return { error: { message: "not sure" } };
+        if (err === "UNAUTHORIZED") {
+          return res.status(401);
+        } else {
+          return { error: { message: "not sure" } };
+        }
       }
     },
   },
   Mutation: {
-    login: async (
-      _,
-      { input },
-      { db, req, res },
-      ___
-    ): Promise<LoginResponse> => {
+    login: async (_, { input }, { db, req }, ___): Promise<LoginResponse> => {
       try {
         const { username, password } = input;
         const isValidLogin = loginValidation(username, password);
@@ -92,21 +89,14 @@ export const userResolvers: Resolvers = {
         console.log("tokenVersion", tokenVersion);
 
         // if passwords do match generate a token
-        const { accessToken, refreshToken } = setTokens(user);
-        const cookies = setTokenCookies({ accessToken, refreshToken });
-        // req.session.refresh = cookies.refresh;
-        req.session.refresh = cookies.refresh[1];
-        // console.log("user from login", user);
+        // const { accessToken, refreshToken } = setTokens(user);
+        const token = setTokens(user);
+        req.session.refresh = token;
         req.session.userId = user._id;
-
-        res.set({
-          "Access-Control-Expose-Headers": "bearer",
-          bearer: accessToken,
-        });
 
         // return token
         // console.log("user res", user);
-        return { user, accessToken };
+        return { user };
       } catch (err) {
         console.log("err", err);
         return { error: { message: "Something went wrong Internally" } };
@@ -147,11 +137,11 @@ export const userResolvers: Resolvers = {
         // console.log("user", user);
         if (!user)
           return { error: { message: "Could not add user at this time" } };
-        const { accessToken, refreshToken } = setTokens(user.ops[0]);
-        const cookies = setTokenCookies({ accessToken, refreshToken });
-        req.session.refresh = cookies.refresh[1];
+        const token = setTokens(user.ops[0]);
+        // const cookies = setTokenCookies({ accessToken, refreshToken });
+        req.session.refresh = token;
         req.session.userId = user.ops[0]._id;
-        return { user: user.ops[0], accessToken };
+        return { user: user.ops[0] };
       } catch (err) {
         console.log("err from register", err);
         const error = {
@@ -296,20 +286,19 @@ export const userResolvers: Resolvers = {
             error: { message: "Could not update the user at this time." },
           };
         } else {
-          const { accessToken, refreshToken } = setTokens(updatedUser.value);
-          console.log({ accessToken });
-          console.log({ refreshToken });
-          const cookies = setTokenCookies({ accessToken, refreshToken });
-          console.log({ cookies });
+          const token = setTokens(updatedUser.value);
+          console.log({ token });
+          // const cookies = setTokenCookies({ accessToken, refreshToken });
+          // console.log({ cookies });
 
           console.log("session destroyed");
           // req.session.destroy();
           delete req.session.forgotPassword;
-          req.session.refresh = cookies.refresh[1];
+          req.session.refresh = token;
           req.session.userId = updatedUser.value._id;
           console.log("CHECK THIS ONE HERE =====>", req.session);
 
-          return { user: updatedUser.value, accessToken };
+          return { user: updatedUser.value };
         }
       } catch (err) {
         console.log("err", err);

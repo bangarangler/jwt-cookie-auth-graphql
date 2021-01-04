@@ -86,7 +86,7 @@ const main = async () => {
     app.use(cookieParser());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
-    app.use((req, _, next) => validateTokensMiddleware(req, _, next));
+    app.use((req, _, next) => validateTokensMiddleware(req, _, next, db));
 
     const server = new ApolloServer({
       typeDefs,

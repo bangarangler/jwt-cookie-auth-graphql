@@ -23,25 +23,6 @@ export type Scalars = {
 
 
 
-export type TokenResponse = {
-  __typename?: 'TokenResponse';
-  accessToken?: Maybe<Scalars['String']>;
-  error?: Maybe<GeneralError>;
-};
-
-export type Query = {
-  __typename?: 'Query';
-  getToken: TokenResponse;
-  post: CreatePostRes;
-  loggedInUser?: Maybe<User>;
-  me: MeResponse;
-};
-
-
-export type QueryPostArgs = {
-  id: Scalars['String'];
-};
-
 export type GeneralError = {
   __typename?: 'GeneralError';
   message: Scalars['String'];
@@ -82,6 +63,18 @@ export type PostSubscriptionRes = {
   __typename?: 'PostSubscriptionRes';
   post?: Maybe<Post>;
   error?: Maybe<GeneralError>;
+};
+
+export type Query = {
+  __typename?: 'Query';
+  post: CreatePostRes;
+  loggedInUser?: Maybe<User>;
+  me: MeResponse;
+};
+
+
+export type QueryPostArgs = {
+  id: Scalars['String'];
 };
 
 export type Mutation = {
@@ -162,7 +155,6 @@ export type LoginResponse = {
   error?: Maybe<GeneralError>;
   errors?: Maybe<Array<Maybe<InputError>>>;
   user?: Maybe<User>;
-  accessToken?: Maybe<Scalars['String']>;
 };
 
 export type RegisterResponse = {
@@ -170,7 +162,6 @@ export type RegisterResponse = {
   error?: Maybe<GeneralError>;
   errors?: Maybe<Array<Maybe<InputError>>>;
   user?: Maybe<User>;
-  accessToken?: Maybe<Scalars['String']>;
 };
 
 export type MeResponse = {
@@ -268,10 +259,8 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
-  TokenResponse: ResolverTypeWrapper<TokenResponse>;
-  String: ResolverTypeWrapper<Scalars['String']>;
-  Query: ResolverTypeWrapper<{}>;
   GeneralError: ResolverTypeWrapper<GeneralError>;
+  String: ResolverTypeWrapper<Scalars['String']>;
   InputError: ResolverTypeWrapper<InputError>;
   Post: ResolverTypeWrapper<Post>;
   CreatePostRes: ResolverTypeWrapper<CreatePostRes>;
@@ -279,6 +268,7 @@ export type ResolversTypes = {
   UpdatePostInput: UpdatePostInput;
   ID: ResolverTypeWrapper<Scalars['ID']>;
   PostSubscriptionRes: ResolverTypeWrapper<PostSubscriptionRes>;
+  Query: ResolverTypeWrapper<{}>;
   Mutation: ResolverTypeWrapper<{}>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   Subscription: ResolverTypeWrapper<{}>;
@@ -295,10 +285,8 @@ export type ResolversTypes = {
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
-  TokenResponse: TokenResponse;
-  String: Scalars['String'];
-  Query: {};
   GeneralError: GeneralError;
+  String: Scalars['String'];
   InputError: InputError;
   Post: Post;
   CreatePostRes: CreatePostRes;
@@ -306,6 +294,7 @@ export type ResolversParentTypes = {
   UpdatePostInput: UpdatePostInput;
   ID: Scalars['ID'];
   PostSubscriptionRes: PostSubscriptionRes;
+  Query: {};
   Mutation: {};
   Boolean: Scalars['Boolean'];
   Subscription: {};
@@ -355,19 +344,6 @@ export type MapDirectiveArgs = {   path: Scalars['String']; };
 
 export type MapDirectiveResolver<Result, Parent, ContextType = any, Args = MapDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
-export type TokenResponseResolvers<ContextType = any, ParentType extends ResolversParentTypes['TokenResponse'] = ResolversParentTypes['TokenResponse']> = {
-  accessToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  error?: Resolver<Maybe<ResolversTypes['GeneralError']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  getToken?: Resolver<ResolversTypes['TokenResponse'], ParentType, ContextType>;
-  post?: Resolver<ResolversTypes['CreatePostRes'], ParentType, ContextType, RequireFields<QueryPostArgs, 'id'>>;
-  loggedInUser?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
-  me?: Resolver<ResolversTypes['MeResponse'], ParentType, ContextType>;
-};
-
 export type GeneralErrorResolvers<ContextType = any, ParentType extends ResolversParentTypes['GeneralError'] = ResolversParentTypes['GeneralError']> = {
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -399,6 +375,12 @@ export type PostSubscriptionResResolvers<ContextType = any, ParentType extends R
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
+  post?: Resolver<ResolversTypes['CreatePostRes'], ParentType, ContextType, RequireFields<QueryPostArgs, 'id'>>;
+  loggedInUser?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
+  me?: Resolver<ResolversTypes['MeResponse'], ParentType, ContextType>;
+};
+
 export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   createPost?: Resolver<ResolversTypes['CreatePostRes'], ParentType, ContextType, RequireFields<MutationCreatePostArgs, 'options'>>;
   updatePost?: Resolver<ResolversTypes['CreatePostRes'], ParentType, ContextType, RequireFields<MutationUpdatePostArgs, 'updates'>>;
@@ -427,7 +409,6 @@ export type LoginResponseResolvers<ContextType = any, ParentType extends Resolve
   error?: Resolver<Maybe<ResolversTypes['GeneralError']>, ParentType, ContextType>;
   errors?: Resolver<Maybe<Array<Maybe<ResolversTypes['InputError']>>>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
-  accessToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -435,7 +416,6 @@ export type RegisterResponseResolvers<ContextType = any, ParentType extends Reso
   error?: Resolver<Maybe<ResolversTypes['GeneralError']>, ParentType, ContextType>;
   errors?: Resolver<Maybe<Array<Maybe<ResolversTypes['InputError']>>>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
-  accessToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -446,13 +426,12 @@ export type MeResponseResolvers<ContextType = any, ParentType extends ResolversP
 };
 
 export type Resolvers<ContextType = any> = {
-  TokenResponse?: TokenResponseResolvers<ContextType>;
-  Query?: QueryResolvers<ContextType>;
   GeneralError?: GeneralErrorResolvers<ContextType>;
   InputError?: InputErrorResolvers<ContextType>;
   Post?: PostResolvers<ContextType>;
   CreatePostRes?: CreatePostResResolvers<ContextType>;
   PostSubscriptionRes?: PostSubscriptionResResolvers<ContextType>;
+  Query?: QueryResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
